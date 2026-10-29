@@ -9,80 +9,68 @@
 <meta property="og:description" content="Master of Science in Computational Finance candidate at Carnegie Mellon University.">
 <meta property="og:type" content="website">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/lmroman12-regular.woff" as="font" type="font/woff" crossorigin>
 <style>
+@font-face{font-family:"LM Roman";src:url(fonts/lmroman12-regular.woff) format("woff");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"LM Roman";src:url(fonts/lmroman12-italic.woff) format("woff");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"LM Roman";src:url(fonts/lmroman12-bold.woff) format("woff");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"LM Roman Display";src:url(fonts/lmroman17-regular.woff) format("woff");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"LM Roman Caps";src:url(fonts/lmromancaps10-regular.woff) format("woff");font-weight:400;font-style:normal;font-display:swap}
 :root{
   --paper:#FFFFFF;
-  --ink:#141A24;
-  --body:#2E3542;
-  --muted:#6A7180;
-  --rule:#E3E5E9;
-  --accent:#1D3B66;
+  --ink:#111111;
+  --body:#222222;
+  --muted:#5E5E5E;
+  --rule:#BDBDBD;
+  --accent:#1F3A68;
 }
 @media (prefers-color-scheme: dark){
-  :root{
-    --paper:#11151C;
-    --ink:#ECEEF2;
-    --body:#C6CBD4;
-    --muted:#8C93A0;
-    --rule:#262C36;
-    --accent:#9DB6DD;
-  }
+  :root{--paper:#121212;--ink:#EDEDED;--body:#D6D6D6;--muted:#9A9A9A;--rule:#4A4A4A;--accent:#A9BFE6}
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{
   margin:0;background:var(--paper);color:var(--body);
-  font-family:"Source Serif 4",Georgia,"Times New Roman",serif;
-  font-optical-sizing:auto;font-weight:400;
-  font-size:18px;line-height:1.7;
-  font-kerning:normal;text-rendering:optimizeLegibility;
-  -webkit-font-smoothing:antialiased;
+  font-family:"LM Roman","Latin Modern Roman","CMU Serif",Georgia,serif;
+  font-size:19px;line-height:1.55;
+  font-kerning:normal;font-variant-ligatures:common-ligatures;
+  text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;
 }
-a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 35%,transparent);transition:border-color .15s}
-a:hover{border-bottom-color:var(--accent)}
-a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
+a:focus-visible{outline:1.5px solid var(--accent);outline-offset:3px}
 
-.wrap{max-width:680px;margin:0 auto;padding:0 24px}
+.wrap{max-width:720px;margin:0 auto;padding:0 24px}
 
-header{padding:120px 0 0}
-h1{
-  margin:0;color:var(--ink);
-  font-weight:400;font-size:clamp(44px,8vw,68px);
-  line-height:1.04;letter-spacing:-0.015em;
-}
-.alias{margin:10px 0 0;color:var(--muted);font-style:italic;font-size:22px;line-height:1.3}
-.lede{margin:36px 0 0;max-width:33em;font-size:20px;line-height:1.6;color:var(--body)}
-.contact{margin:28px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:4px 28px;font-size:17px}
+header{padding:112px 0 0;text-align:center}
+h1{margin:0;color:var(--ink);font-family:"LM Roman Display","LM Roman",Georgia,serif;font-weight:400;font-size:clamp(40px,7vw,54px);line-height:1.1;letter-spacing:.005em}
+.lede{margin:22px auto 0;max-width:30em;font-style:italic;color:var(--body)}
+.contact{margin:18px 0 0;padding:0;list-style:none;display:flex;justify-content:center;flex-wrap:wrap;gap:2px 0}
+.contact li + li::before{content:"|";color:var(--rule);margin:0 .75em}
 
-main{padding:88px 0 0}
-section + section{margin-top:64px}
+main{padding:80px 0 0}
+section + section{margin-top:56px}
 h2{
-  margin:0 0 28px;color:var(--ink);
-  font-weight:600;letter-spacing:.06em;font-variant-caps:all-small-caps;font-size:19px;
-  padding-bottom:12px;border-bottom:1px solid var(--rule);
+  margin:0 0 22px;color:var(--ink);
+  font-family:"LM Roman Caps","LM Roman",Georgia,serif;font-weight:400;font-size:22px;letter-spacing:.03em;
+  padding-bottom:6px;border-bottom:.75px solid var(--ink);
 }
-.entry + .entry{margin-top:32px}
+.entry + .entry{margin-top:24px}
 .entry .top{display:flex;justify-content:space-between;align-items:baseline;gap:24px}
-.entry h3{margin:0;color:var(--ink);font-size:20px;font-weight:600;line-height:1.35}
-.entry .place{color:var(--muted);font-size:16px;white-space:nowrap}
-.entry .degree{margin:4px 0 0;font-style:italic}
-.entry .dates{margin:2px 0 0;color:var(--muted);font-size:16px;font-variant-numeric:lining-nums tabular-nums}
-.entry .note{margin:8px 0 0}
+.entry h3{margin:0;color:var(--ink);font-size:19px;font-weight:700;line-height:1.4}
+.entry .place,.entry .dates{color:var(--body);white-space:nowrap;font-variant-numeric:lining-nums}
+.entry .degree{margin:0;font-style:italic}
+.entry .note{margin:2px 0 0}
 
-footer{padding:120px 0 56px;color:var(--muted);font-size:15px}
+footer{padding:112px 0 56px;color:var(--muted);font-size:16px;text-align:center}
 
 @media (max-width:560px){
   header{padding-top:64px}
-  body{font-size:17px}
-  .alias{font-size:20px}
-  .lede{font-size:18px;margin-top:28px}
-  main{padding-top:64px}
+  body{font-size:18px}
+  main{padding-top:56px}
   .entry .top{flex-direction:column;gap:0}
-  .entry .place{order:2;white-space:normal}
-  footer{padding-top:80px}
+  .entry .place,.entry .dates{white-space:normal}
+  footer{padding-top:72px}
 }
 </style>
 </head>
@@ -103,13 +91,11 @@ footer{padding:120px 0 56px;color:var(--muted);font-size:15px}
       <h2>Education</h2>
       <div class="entry">
         <div class="top"><h3>Carnegie Mellon University</h3><span class="place">Pittsburgh, PA</span></div>
-        <p class="degree">Master of Science in Computational Finance</p>
-        <p class="dates">August 2026 – December 2027 (expected)</p>
+        <div class="top"><p class="degree">M.S. in Computational Finance</p><span class="dates">Aug 2026 – Dec 2027 (expected)</span></div>
       </div>
       <div class="entry">
         <div class="top"><h3>Seoul National University</h3><span class="place">Seoul, South Korea</span></div>
-        <p class="degree">Bachelor of Science in Computer Science and Engineering; Bachelor of Business Administration</p>
-        <p class="dates">March 2019 – August 2025</p>
+        <div class="top"><p class="degree">B.S. in Computer Science and Engineering; B.B.A.</p><span class="dates">Mar 2019 – Aug 2025</span></div>
         <p class="note">GPA 3.94 / 4.0, Summa Cum Laude</p>
       </div>
     </section>
