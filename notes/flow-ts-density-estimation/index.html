@@ -74,7 +74,7 @@ window.addEventListener('DOMContentLoaded', function () {
   function stripFrontMatter(text) { return text.replace(/^---\n[\s\S]*?\n---\n/, ''); }
 
   fetch('manifest.json', { cache: 'no-cache' })
-    .then(function (r) { if (!r.ok) throw new Error(); return r.json(); })
+    .then(function (r) { if (r.status === 404) return []; if (!r.ok) throw new Error(); return r.json(); })
     .then(function (list) {
       return Promise.all(list.map(function (n) {
         return fetch('md/' + n.file, { cache: 'no-cache' }).then(function (r) { return r.text(); })
@@ -82,7 +82,7 @@ window.addEventListener('DOMContentLoaded', function () {
       }));
     })
     .then(function (notes) {
-      box.innerHTML = '';
+      box.innerHTML = notes.length ? '' : '<p class="status">No notes published yet.</p>';
       var toc = document.getElementById('toc-list');
       notes.forEach(function (n) {
         var id = n.meta.file.replace(/\.md$/, '');
