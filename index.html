@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soowan (Shawn) Kim</title>
+<meta name="description" content="Soowan (Shawn) Kim — MSCF candidate at Carnegie Mellon. Deep learning for financial time series and systematic trading.">
+<meta property="og:title" content="Soowan (Shawn) Kim">
+<meta property="og:description" content="MSCF candidate at Carnegie Mellon. Deep learning for financial time series and systematic trading.">
+<meta property="og:type" content="website">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F5F7FA;
+  --ink:#152238;
+  --body:#3A4659;
+  --muted:#6B7689;
+  --rule:#D9DEE6;
+  --accent:#1F6F78;
+  --band:31,111,120;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#0E1622;
+    --ink:#E8EDF4;
+    --body:#B9C3D1;
+    --muted:#8693A6;
+    --rule:#243246;
+    --accent:#5FC1C9;
+    --band:95,193,201;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--body);
+  font-family:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:17px;line-height:1.6;
+  font-feature-settings:"tnum" 1;
+}
+a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1.5px}
+a:hover{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+
+header{padding:72px 0 0}
+h1{
+  margin:0;color:var(--ink);font-weight:700;
+  font-size:clamp(40px,7vw,64px);line-height:1.02;letter-spacing:-0.025em;
+}
+.alias{display:block;font-weight:400;color:var(--muted);font-size:.42em;letter-spacing:0;margin-top:14px}
+.lede{margin:24px 0 0;max-width:34em;font-size:19px;color:var(--body)}
+.links{margin:20px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px}
+
+figure.fan{margin:48px 0 0}
+figure.fan canvas{display:block;width:100%;height:220px}
+figure.fan figcaption{margin-top:10px;font-size:14px;color:var(--muted);max-width:40em}
+
+main section{padding:56px 0 0}
+h2{margin:0 0 20px;color:var(--ink);font-size:22px;font-weight:600;letter-spacing:-0.01em;
+   padding-bottom:10px;border-bottom:1px solid var(--rule)}
+.entry{display:grid;grid-template-columns:1fr auto;gap:2px 24px;margin:0 0 26px}
+.entry h3{margin:0;color:var(--ink);font-size:17px;font-weight:600}
+.entry .when{color:var(--muted);font-size:15px;white-space:nowrap}
+.entry .where{grid-column:1/-1;color:var(--muted);font-size:15px}
+.entry p{grid-column:1/-1;margin:6px 0 0;max-width:38em}
+ul.plain{margin:0;padding:0;list-style:none}
+ul.plain li{margin:0 0 14px;max-width:40em}
+ul.plain li strong{color:var(--ink);font-weight:600}
+
+footer{padding:64px 0 48px;color:var(--muted);font-size:14px}
+
+@media (max-width:560px){
+  header{padding-top:48px}
+  .entry{grid-template-columns:1fr}
+  .entry .when{order:-1}
+  figure.fan canvas{height:170px}
+  body{font-size:16px}
+  .lede{font-size:17px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Soowan Kim<span class="alias">Shawn Kim</span></h1>
+    <p class="lede">Master of Science in Computational Finance candidate at Carnegie Mellon University. I build deep learning models that forecast full distributions of financial time series, and I apply AI and LLMs to systematic trading.</p>
+    <ul class="links">
+      <li><a href="https://github.com/shawnkimsw">GitHub</a></li>
+    </ul>
+    <figure class="fan" aria-label="Chart: a simulated price path followed by a widening predictive distribution">
+      <canvas id="fan"></canvas>
+      <figcaption>A simulated path and its forecast as a full distribution rather than a single line, the kind of output my research models produce.</figcaption>
+    </figure>
+  </header>
+
+  <main>
+    <section id="research">
+      <h2>Research</h2>
+      <div class="entry">
+        <h3>Nonparametric distribution prediction for time series</h3>
+        <p>Deep learning methods that predict the whole conditional distribution of a financial time series instead of a point forecast, using architectures such as TimesNet and denoising diffusion probabilistic models (DDPM).</p>
+      </div>
+    </section>
+
+    <section id="experience">
+      <h2>Experience</h2>
+      <div class="entry">
+        <h3>Quantitative Trader</h3>
+        <span class="where">ZeroOne AI</span>
+        <p>Researched and traded systematic strategies and worked on the firm's backtesting engine.</p>
+      </div>
+      <div class="entry">
+        <h3>Military service</h3>
+        <span class="where">Republic of Korea</span>
+      </div>
+    </section>
+
+    <section id="education">
+      <h2>Education</h2>
+      <div class="entry">
+        <h3>Carnegie Mellon University</h3>
+        <span class="when">2026 – Dec 2027</span>
+        <span class="where">Master of Science in Computational Finance, Pittsburgh</span>
+      </div>
+      <div class="entry">
+        <h3>B.S. in Computer Science</h3>
+        <span class="where">Focus on deep learning</span>
+      </div>
+    </section>
+
+    <section id="projects">
+      <h2>Projects</h2>
+      <ul class="plain">
+        <li><a href="https://github.com/shawnkimsw/alpha-research-agents"><strong>alpha-research-agents</strong></a><br>A multi-agent system that generates, implements and tests alpha research ideas.</li>
+        <li><a href="https://github.com/shawnkimsw/quant-framework"><strong>quant-framework</strong></a><br>A framework for quantitative research and backtesting.</li>
+        <li><a href="https://github.com/shawnkimsw/time_series_deep_learning"><strong>time_series_deep_learning</strong></a><br>Deep learning models for financial time-series forecasting.</li>
+      </ul>
+    </section>
+
+    <section id="honors">
+      <h2>Honors</h2>
+      <ul class="plain">
+        <li><strong>Gold medal</strong>, Korean Mathematical Olympiad (KMO)</li>
+        <li><strong>Gold medal</strong>, Korea Olympiad in Informatics (KOI)</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>© 2026 Soowan Kim</footer>
+</div>
+
+<script>
+(function(){
+  var c=document.getElementById('fan'); if(!c) return;
+  var ctx=c.getContext('2d');
+  // deterministic RNG
+  var s=7; function rnd(){s=(s*16807)%2147483647;return (s-1)/2147483646;}
+  function gauss(){var u=rnd()||1e-9,v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  var H=140,F=60,path=[0];
+  for(var i=1;i<H;i++) path.push(path[i-1]+gauss()*0.9+0.04);
+  var last=path[H-1], drift=0.05, vol=0.9;
+  var qs=[[0.05,0.95],[0.15,0.85],[0.3,0.7]], z={0.05:-1.645,0.95:1.645,0.15:-1.036,0.85:1.036,0.3:-0.524,0.7:0.524};
+  var lo=Math.min.apply(null,path), hi=Math.max.apply(null,path);
+  lo=Math.min(lo,last+drift*F-1.645*vol*Math.sqrt(F)); hi=Math.max(hi,last+drift*F+1.645*vol*Math.sqrt(F));
+  var css=getComputedStyle(document.documentElement);
+  function col(n){return css.getPropertyValue(n).trim();}
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function draw(p){
+    var dpr=window.devicePixelRatio||1, w=c.clientWidth, h=c.clientHeight;
+    c.width=w*dpr; c.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    var pad=8, N=H+F;
+    function X(t){return pad+(w-2*pad)*t/(N-1);}
+    function Y(v){return pad+(h-2*pad)*(1-(v-lo)/(hi-lo));}
+    var band=col('--band'), ink=col('--ink'), rule=col('--rule');
+    // forecast origin line
+    ctx.strokeStyle=rule; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(X(H-1),pad); ctx.lineTo(X(H-1),h-pad); ctx.stroke(); ctx.setLineDash([]);
+    // history
+    var hp=Math.min(1,p/0.55), hn=Math.max(2,Math.floor(H*hp));
+    ctx.strokeStyle=ink; ctx.lineWidth=1.5; ctx.lineJoin='round';
+    ctx.beginPath(); for(var i=0;i<hn;i++){ i?ctx.lineTo(X(i),Y(path[i])):ctx.moveTo(X(i),Y(path[i])); } ctx.stroke();
+    // bands
+    var fp=Math.max(0,(p-0.55)/0.45); if(fp<=0) return;
+    var fn=Math.max(1,Math.floor(F*fp));
+    qs.forEach(function(q,k){
+      ctx.fillStyle='rgba('+band+','+(0.14+0.1*k)+')';
+      ctx.beginPath();
+      for(var j=0;j<=fn;j++){var m=last+drift*j, sd=vol*Math.sqrt(j); ctx.lineTo(X(H-1+j),Y(m+z[q[1]]*sd));}
+      for(var j2=fn;j2>=0;j2--){var m2=last+drift*j2, sd2=vol*Math.sqrt(j2); ctx.lineTo(X(H-1+j2),Y(m2+z[q[0]]*sd2));}
+      ctx.closePath(); ctx.fill();
+    });
+    ctx.strokeStyle='rgb('+band+')'; ctx.lineWidth=1.5;
+    ctx.beginPath(); for(var j3=0;j3<=fn;j3++){var v=last+drift*j3; j3?ctx.lineTo(X(H-1+j3),Y(v)):ctx.moveTo(X(H-1),Y(v));} ctx.stroke();
+  }
+  var start=null, dur=1800;
+  function frame(t){ if(!start) start=t; var p=Math.min(1,(t-start)/dur); draw(1-Math.pow(1-p,3)); if(p<1) requestAnimationFrame(frame); }
+  if(reduce) draw(1); else requestAnimationFrame(frame);
+  var rt; window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){draw(1);},100);});
+  if(window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){css=getComputedStyle(document.documentElement);draw(1);});
+})();
+</script>
+</body>
+</html>
