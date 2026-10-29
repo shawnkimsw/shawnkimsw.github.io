@@ -4,4 +4,3 @@ Personal website of Shawn Kim, served with GitHub Pages at <https://shawnkimsw.g
 
 A single static page (`index.html`) with no build step. Edit it and push to `main` to update the site.
 
-Set in Latin Modern Roman (the LaTeX typeface), self-hosted from `fonts/` under the GUST Font License (`fonts/GUST-FONT-LICENSE.txt`).
