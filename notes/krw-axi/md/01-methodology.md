@@ -145,7 +145,7 @@ Exact repricing of the benchmarks leaves two degrees of freedom in a cubic splin
 | End | Condition | Rationale |
 |---|---|---|
 | Short end | $f''(0) = 0$ | Yield and forward curves usually have a clear slope at the short end, which reflects the expected direction of the next policy moves. Zero curvature is the weakest condition that leaves this slope free. Forcing the slope itself to zero would contradict the shape of observed curves. |
-| Long end | $f'(30) = 0$ | The forward curve has zero slope at the last knot, so it joins the flat-forward extension beyond 30 years with no jump in level or slope. This makes extrapolation to longer maturities well defined. |
+| Long end | $f'(30) = 0$ | Beyond 30 years the forward curve is extrapolated flat, which has zero slope. Setting the slope to zero at the last knot ensures C1 continuity where the spline meets the flat extension, with no jump in level or slope. The curvature can still change at that knot, so the curve is C1 rather than C2 there. |
 
 This follows the design of McCulloch and Kochin (2000), who fit an exact spline to a small number of well-spaced Treasury maturities. Their spline is placed on the log discount function rather than on the forward curve, so their conditions do not carry over exactly, but the reasoning is the same: a flat forward at the long end so that the curve can be extrapolated, and a short end that is left free to slope, because forcing a zero slope at maturity zero is contrary to the upward slope the term structure ordinarily shows there.
 
