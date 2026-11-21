@@ -63,7 +63,7 @@ All rates use continuous compounding. The curve is parametrized by the instantan
 | Forward rate from $t_1$ to $t_2$ | $F(t_1, t_2) = \frac{s(t_2)\,t_2 - s(t_1)\,t_1}{t_2 - t_1}$ |
 | Bond price | $\sum_j c\,P(t_j) + 100\,P(T)$ |
 
-The spot rate is the average of the forward rates up to $t$, and the forward rate is the marginal rate at $t$.
+The spot rate is the average of the forward rates up to $t$, and the forward rate is the marginal rate at $t$. Each relation is derived in Appendix A.
 
 ### Instruments and conventions
 
@@ -108,6 +108,93 @@ The Z-spread is used rather than a yield spread because a bond's yield depends o
 ## 5. Aggregation
 
 Trade-level Z-spreads are cleaned and grouped by maturity bucket. Within each bucket, the spreads are aggregated as a volume-weighted median, which keeps large trades influential while limiting the effect of outliers. The index is computed daily.
+
+
+## Appendix A. Derivations of the term structure relations
+
+### A.1 Continuous compounding
+
+With a rate $r$ compounded $n$ times a year, one unit invested today grows to $(1 + r/n)^{nt}$ by time $t$. Since $(1 + r/n)^n \to e^r$ as $n \to \infty$,
+
+$$
+\lim_{n \to \infty} \left(1 + \frac{r}{n}\right)^{nt} = e^{rt}
+$$
+
+So under continuous compounding, one unit paid at $t$ is worth $e^{-rt}$ today. With the spot rate $s(t)$ for maturity $t$, the discount factor is
+
+$$
+P(t) = e^{-s(t)\,t}
+$$
+
+### A.2 Forward rate between two dates
+
+Borrowing from today to $t_2$ must cost the same as borrowing to $t_1$ and then rolling over from $t_1$ to $t_2$ at the forward rate $F(t_1, t_2)$ agreed today. Otherwise one could borrow on one route, lend on the other and lock in a riskless profit. In discount factors,
+
+$$
+P(t_2) = P(t_1)\, e^{-F(t_1, t_2)\,(t_2 - t_1)}
+$$
+
+Taking logs and solving for $F$:
+
+$$
+F(t_1, t_2) = \frac{\ln P(t_1) - \ln P(t_2)}{t_2 - t_1}
+$$
+
+Substituting $\ln P(t) = -s(t)\,t$ from A.1:
+
+$$
+F(t_1, t_2) = \frac{s(t_2)\,t_2 - s(t_1)\,t_1}{t_2 - t_1}
+$$
+
+### A.3 Instantaneous forward rate
+
+The instantaneous forward rate $f(t)$ is the forward rate for an infinitesimal period starting at $t$. Letting $t_1 = t$ and $t_2 = t + \Delta$ in A.2,
+
+$$
+f(t) = \lim_{\Delta \to 0} \frac{\ln P(t) - \ln P(t + \Delta)}{\Delta} = -\frac{d}{dt} \ln P(t)
+$$
+
+Since $\ln P(t) = -s(t)\,t$, the product rule gives
+
+$$
+f(t) = \frac{d}{dt}\big[s(t)\,t\big] = s(t) + t\,s'(t)
+$$
+
+### A.4 Discount factor from the forward curve
+
+Integrate $f(u) = -\frac{d}{du} \ln P(u)$ from $0$ to $t$, using $P(0) = 1$:
+
+$$
+\int_0^t f(u)\,du = -\big[\ln P(t) - \ln P(0)\big] = -\ln P(t)
+$$
+
+Therefore
+
+$$
+P(t) = \exp\left(-\int_0^t f(u)\,du\right)
+$$
+
+Discounting to $t$ is the same as discounting through every instant on the way, each at its own forward rate.
+
+### A.5 Spot rate as the average forward rate
+
+Equating the two expressions for the discount factor, $e^{-s(t)\,t}$ from A.1 and $\exp\left(-\int_0^t f(u)\,du\right)$ from A.4:
+
+$$
+s(t)\,t = \int_0^t f(u)\,du \quad\Longrightarrow\quad s(t) = \frac{1}{t}\int_0^t f(u)\,du
+$$
+
+The spot rate is the average of the forward rates up to $t$. A.3 is the matching marginal relation: $f(t) = s(t) + t\,s'(t)$, so where the spot curve slopes upward ($s' > 0$), the forward rate lies above the spot rate, just as a marginal cost above the average cost pulls the average up.
+
+### A.6 Bond price
+
+A coupon bond is a portfolio of zero-coupon bonds, one for each cash flow. A cash flow $\text{CF}_j$ paid at $t_j$ is worth $\text{CF}_j\,P(t_j)$ today, so by no-arbitrage the bond is worth the sum of its parts. For a bond with coupon $c$ per period, paid at $t_1, \dots, t_n = T$, and face value 100,
+
+$$
+\text{Price} = \sum_{j=1}^{n} c\,P(t_j) + 100\,P(T)
+$$
+
+For a KTB with an annual coupon rate $C$ paid semiannually, $c = 100\,C/2$.
 
 ## References
 
