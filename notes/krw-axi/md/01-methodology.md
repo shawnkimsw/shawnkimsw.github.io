@@ -49,7 +49,58 @@ The Chinese AXI, built by Tsinghua University in 2022, showed that the design ca
 | Aggregation | Volume-weighted average | Volume-weighted median by maturity bucket, weighted by issuance share | Volume-weighted median by maturity bucket |
 | Frequency | Daily | Monthly | Daily |
 
-## 3. Risk-free term structure
+## 3. Data: the Korean government bond market
+
+The risk-free curve is built from two families of bonds: Korea Treasury Bonds (KTBs), issued by the Ministry of Economy and Finance to fund the government, and Monetary Stabilization Bonds (MSBs), issued by the Bank of Korea to absorb excess liquidity. Both are treated as government bonds, and both are eligible collateral for the repo transactions behind KOFR.
+
+### Korea Treasury Bonds
+
+KTBs are fixed-rate bonds with semiannual coupons. They are sold through competitive auctions to primary dealers every month, and the coupon rate is set in multiples of 0.125%.
+
+To keep each benchmark large and liquid, KTBs use fungible issuance: a new issue is created only at fixed intervals, and every auction in between reopens the same bond with the same maturity and coupon. The current issue at each maturity is the on-the-run benchmark, and its yield is the market's reference rate for that maturity.
+
+| Maturity | New issues per year | New issue date | Fungible period |
+|---|---|---|---|
+| 3-year | 2 | 10 June, 10 December | 6 months |
+| 5-year | 2 | 10 March, 10 September | 6 months |
+| 10-year | 2 | 10 June, 10 December | 6 months |
+| 20-year | 1 | 10 September | 1 year |
+| 30-year | 1 | 10 March | 1 year |
+| 50-year | Every 2 years | 10 September | 2 years |
+
+A 2-year KTB is also auctioned regularly. Each issue is named by its coupon and maturity: KTB 02625-2703, for example, pays a 2.625% coupon and matures in March 2027.
+
+Because new issues fall on the 10th of March, June, September or December and coupons are paid every six months, KTB coupon dates lie on a quarterly grid. Most of these coupon dates fall between the maturities of the benchmark bonds, so their discount factors are not observed directly and have to come from the fitted curve.
+
+### Monetary Stabilization Bonds
+
+MSBs cover the short end of the curve, where KTBs are scarce.
+
+| Maturity | Type | Auction frequency | Fungible period |
+|---|---|---|---|
+| 91-day | Discount | Weekly | None |
+| 1-year | Coupon | Monthly | 3 months |
+| 2-year | Coupon | Monthly | 3 months |
+| 3-year | Coupon | Monthly | 6 months |
+
+The 91-day MSB is a discount bond with a single cash flow at maturity, so it gives the cleanest observation of the short-end rate. A 182-day MSB was issued regularly until 2021, when it was replaced by the 3-year MSB. In August 2026 the Bank of Korea lengthened the fungible period of the 1-year MSB from two to three months, with new issues on the 1st of March, June, September and December.
+
+### Instruments used in the curve
+
+| Maturity | Instrument |
+|---|---|
+| Overnight | KOFR |
+| 3 months | On-the-run 91-day MSB |
+| 1 year | On-the-run 1-year MSB |
+| 2, 3, 5 and 10 years | On-the-run KTBs |
+
+On-the-run issues carry most of the trading volume, so their prices are the most reliable measure of risk-free borrowing. Off-the-run bonds trade far less and carry a liquidity premium that would bias the risk-free curve upward.
+
+### Quoting and settlement
+
+Korean bonds are quoted in yield, and trades settle at the dirty price, including accrued interest. Accrued interest uses an Actual/365 day count. The curve is therefore fitted to dirty prices computed from the quoted yields.
+
+## 4. Risk-free term structure
 
 ### Notation
 
@@ -65,15 +116,9 @@ All rates use continuous compounding. The curve is parametrized by the instantan
 
 The spot rate is the average of the forward rates up to $t$, and the forward rate is the marginal rate at $t$. Each relation is derived in Appendix A.
 
-### Instruments and conventions
-
-The curve is anchored at KOFR at $t = 0$ and fitted to on-the-run Monetary Stabilization Bonds at the short end and on-the-run KTBs out to 10 years. On-the-run issues carry most of the trading volume, so their prices are the most reliable measure of risk-free borrowing.
-
-KTBs pay semiannual coupons and use an Actual/365 day count. Korean bonds are quoted in yield and settle at the dirty price, so the curve is fitted to dirty prices.
-
 ### Spline on the forward curve
 
-The forward curve is represented as a cubic spline in a B-spline basis:
+The curve is anchored at KOFR at $t = 0$ and fitted to the instruments listed in Section 3. The forward curve is represented as a cubic spline in a B-spline basis:
 
 $$
 f(t) = \sum_i c_i\,B_i(t)
@@ -95,7 +140,7 @@ Modeling the forward curve directly keeps it smooth. If the spline is placed on 
 
 A spline is preferred over Nelson–Siegel here because the index needs the curve to match current market prices closely. Any fitting error in the risk-free curve would show up directly as a false credit spread. Nelson–Siegel's fixed functional form is interpretable, which suits policy analysis, but it cannot follow local features of the curve.
 
-## 4. Credit spread
+## 5. Credit spread
 
 For each credit bond trade, the Z-spread is the constant spread $z$ over the spot curve that reprices the trade:
 
@@ -105,7 +150,7 @@ $$
 
 The Z-spread is used rather than a yield spread because a bond's yield depends on its cash-flow timing along the curve, not only on its credit risk. On an upward-sloping curve, a coupon bond yields less than a zero-coupon bond of the same maturity, so a yield spread would mix coupon effects into the credit measure.
 
-## 5. Aggregation
+## 6. Aggregation
 
 Trade-level Z-spreads are cleaned and grouped by maturity bucket. Within each bucket, the spreads are aggregated as a volume-weighted median, which keeps large trades influential while limiting the effect of outliers. The index is computed daily.
 
