@@ -140,21 +140,23 @@ The curve is built with QuantLib's piecewise yield curve, which bootstraps a spl
 
 ### 4.4 Boundary conditions
 
-Exact repricing of the benchmarks leaves two degrees of freedom in a cubic spline, so two additional assumptions are needed. The curve uses the natural spline conditions, zero curvature at both ends:
+Exact repricing of the benchmarks leaves two degrees of freedom in a cubic spline, so two additional assumptions are needed, one at each end of the curve:
 
 | End | Condition | Rationale |
 |---|---|---|
-| Short end | $f''(0) = 0$ | The slope of the forward curve near $t = 0$ carries the market's expected direction of the next policy moves, so it is left free. Zero curvature only assumes that those moves are not expected to speed up or slow down. The short end is also where the data are densest, with KOFR, two MSBs and the 2-year KTB close together, so the condition has little effect there. |
-| Long end | $f''(30) = 0$ | A forward rate 30 years out is the long-run expected short rate plus a term premium. The expected short rate has settled at its long-run level, and the term premium changes slowly with maturity, so the forward curve should not be bending there. |
+| Short end | $f''(0) = 0$ | Yield and forward curves usually have a clear slope at the short end, which reflects the expected direction of the next policy moves. Zero curvature is the weakest condition that leaves this slope free. Forcing the slope itself to zero would contradict the shape of observed curves. |
+| Long end | $f'(30) = 0$ | The forward curve has zero slope at the last knot, so it joins the flat-forward extension beyond 30 years with no jump in level or slope. This makes extrapolation to longer maturities well defined. |
 
-**Why not both conditions at 30 years.** Economically, $f'(30) = 0$ and $f''(30) = 0$ together would say that the curve has fully levelled off, since the forward from 30 to 31 years should barely differ from the forward from 31 to 32 years. That choice was rejected for two reasons:
+This follows the design of McCulloch and Kochin (2000), who fit an exact spline to a small number of well-spaced Treasury maturities. Their spline is placed on the log discount function rather than on the forward curve, so their conditions do not carry over exactly, but the reasoning is the same: a flat forward at the long end so that the curve can be extrapolated, and a short end that is left free to slope, because forcing a zero slope at maturity zero is contrary to the upward slope the term structure ordinarily shows there.
 
-- **Stability.** With both conditions at one end, the spline is determined by marching from that end, and an error in one price grows by a factor of about $2 + \sqrt{3} \approx 3.7$ at each knot. A small error in a thinly traded 30-year price would swing the short end, where most credit trades sit. With one condition at each end, errors instead shrink by about the same factor away from their source.
+**A modeling choice, not a unique answer.** Other conditions are possible. For example, both $f'(30) = 0$ and $f''(30) = 0$ could be imposed at the long end, since the forward from 30 to 31 years should barely differ from the forward from 31 to 32 years. That choice was rejected for two reasons:
+
+- **Stability.** With both conditions at one end, the spline is determined by marching from that end, and an error in one price grows by a factor of about $2 + \sqrt{3} \approx 3.7$ at each knot. A small error in a thinly traded 30-year price would swing the short end, where most credit trades sit. With one condition at each end, the curve is held at both sides, like a string held at both ends, and errors instead shrink by about the same factor away from their source.
 - **Implementation.** Standard spline solvers, including QuantLib and SciPy, take one boundary condition per end.
 
-**How central banks handle the same issue.** Central banks that use splines do not impose boundary conditions by hand. They solve an optimization rather than a system of equations: they minimize pricing errors plus a roughness penalty $\lambda \int f''(t)^2\,dt$ on the forward curve. The penalty itself pushes the curvature to zero at both ends, which is the same natural condition used here. The Bank of England also increases the penalty with maturity, so its long-end forwards come out nearly flat.
+**How central banks handle the same issue.** Central banks that use splines do not impose boundary conditions by hand. They solve an optimization rather than a system of equations: they minimize pricing errors plus a roughness penalty $\lambda \int f''(t)^2\,dt$ on the forward curve, and the penalty itself pushes the curvature to zero at the ends. The Bank of England also increases the penalty with maturity, so its long-end forwards come out nearly flat, which is the same goal as $f'(30) = 0$ here.
 
-**Robustness check.** Because the boundary choice can move the forwards near the ends of the curve, the index should be recomputed with the alternative $f''(0) = 0$ and $f'(30) = 0$ to confirm that the spreads do not depend on it.
+**Robustness check.** Because the boundary choice can move the forwards near the ends of the curve, the index should be recomputed with the natural spline, $f''(0) = 0$ and $f''(30) = 0$, to confirm that the spreads do not depend on it.
 
 ### 4.5 Comparison of curve-fitting methods
 
@@ -289,4 +291,5 @@ For a KTB with an annual coupon rate $C$ paid semiannually, $c = 100\,C/2$.
 - Fisher, M., Nychka, D. and Zervos, D. (1995). *Fitting the term structure of interest rates with smoothing splines.* Federal Reserve Board, FEDS Working Paper 95-1.
 - Anderson, N. and Sleath, J. (2001). *New estimates of the UK real and nominal yield curves.* Bank of England Working Paper No 126.
 - Gürkaynak, R., Sack, B. and Wright, J. (2007). *The U.S. Treasury yield curve: 1961 to the present.* Journal of Monetary Economics 54(8), 2291–2304.
+- McCulloch, J. H. and Kochin, L. A. (2000). *The inflation premium implicit in the US real and nominal term structures of interest rates.* Ohio State University Economics Department Working Paper No 98-12.
 - Hagan, P. and West, G. (2006). *Interpolation methods for curve construction.* Applied Mathematical Finance 13(2).
