@@ -95,9 +95,11 @@ The 91-day MSB is a discount bond with a single cash flow at maturity, so it giv
 | Overnight | KOFR |
 | 3 months | On-the-run 91-day MSB |
 | 1 year | On-the-run 1-year MSB |
-| 2, 3, 5 and 10 years | On-the-run KTBs |
+| 2, 3, 5, 10, 20 and 30 years | On-the-run KTBs |
 
 On-the-run issues carry most of the trading volume, so their prices are the most reliable measure of risk-free borrowing. Off-the-run bonds trade far less and carry a liquidity premium that would bias the risk-free curve upward.
+
+The curve extends to 30 years, so the long-end boundary condition sits far out, where a settled forward curve is easiest to justify. The 50-year KTB is left out: it is issued only every two years in small size and trades thinly, because its main holders, insurers and pension funds, buy it to match long liabilities rather than to trade. Its prices would be too noisy to pin down the end of the curve.
 
 ### 3.4 Quoting and settlement
 
@@ -121,43 +123,38 @@ The spot rate is the average of the forward rates up to $t$, and the forward rat
 
 ### 4.2 Spline on the forward curve
 
-The forward curve is represented as a cubic spline in a B-spline basis:
-
-$$
-f(t) = \sum_i c_i\,B_i(t)
-$$
-
-Each $B_i$ is a piecewise cubic that is nonzero over only a few adjacent knot intervals and is already C2 at the knots. Any weighted sum of them is therefore a C2 cubic spline, so continuity does not need to be imposed as separate equations.
+The forward curve is represented as a cubic spline: a cubic polynomial on each segment between knots, joined so that the value, slope and curvature are continuous (C2). The spline is determined by the forward values at the knots together with two boundary conditions, and the bootstrap in Section 4.3 solves for those knot values.
 
 Modeling the forward curve directly keeps it smooth. If the spline is placed on the spot curve instead, the implied forward $f = s + t\,s'$ is one degree less smooth: a quadratic spline on spot rates gives forwards that are continuous but kinked at every knot. Kinks at arbitrary knot dates have no economic meaning and distort anything priced off forward rates.
 
 ### 4.3 Fitting procedure
 
-1. **Knots.** The knots are placed at $t = 0$ and at the maturities of the benchmark instruments in Section 3.3.
-2. **Short-rate anchor.** The forward curve starts at the overnight rate: $f(0) = \text{KOFR}$.
-3. **Exact repricing.** The curve reprices every benchmark bond exactly at its dirty price, using the repricing equation below.
-4. **Two additional assumptions.** The anchor and the bond prices leave two degrees of freedom, one at each end of the curve. They are fixed by the boundary conditions in Section 4.4.
-5. **Solving.** A coupon bond's price depends on the forward curve over its whole life, so its equation involves every segment up to its maturity, and it is nonlinear in the coefficients through the exponential. All equations are therefore solved together with Newton's method, starting from a flat curve at KOFR.
-6. **Extrapolation.** Beyond the last benchmark, the forward curve is held flat at its value at the last knot. Credit bonds with longer maturities are discounted on this flat extension.
+The curve is built with QuantLib's piecewise yield curve, which bootstraps a spline so that every benchmark reprices exactly.
 
-The repricing equation for benchmark bond $k$ is
-
-$$
-\text{Price}_k = \sum_j \text{CF}_{k,j}\,\exp\left(-\int_0^{t_{k,j}} f(u)\,du\right)
-$$
-
-The integral of a B-spline has a closed form, so each model price is cheap to compute.
+1. **Instruments.** Each on-the-run MSB and KTB enters as a fixed-rate bond helper with its full terms: issue and maturity dates, coupon rate, semiannual coupon schedule on the South Korea business-day calendar, Actual/365 day count and settlement lag. Its quoted yield is converted to a dirty price using KTB conventions, and the helper's price type is set to dirty. KOFR enters as an overnight deposit, which anchors the short end of the forward curve.
+2. **Curve type.** The curve interpolates instantaneous forward rates, using a cubic spline with the boundary conditions in Section 4.4. The knots are the maturities of the instruments, so each segment runs from one benchmark maturity to the next.
+3. **Bootstrap.** Starting from the shortest instrument, QuantLib finds the forward value at each knot that makes that instrument reprice exactly, using Brent's method, a one-dimensional root-finder. Each cash flow is discounted with $P(t) = \exp\left(-\int_0^t f(u)\,du\right)$, and coupons that fall in earlier segments use the part of the curve already built.
+4. **Iteration.** A cubic spline is global: setting a later knot slightly moves the earlier segments. QuantLib therefore repeats the full pass, using the latest knot values, until no knot value changes. At convergence, every instrument reprices exactly.
+5. **Daily refit.** The curve is refitted every business day on that day's on-the-run prices, matching the daily frequency of the index.
+6. **Extrapolation.** Beyond 30 years, the forward curve is held flat at its 30-year value.
 
 ### 4.4 Boundary conditions
 
+Exact repricing of the benchmarks leaves two degrees of freedom in a cubic spline, so two additional assumptions are needed. The curve uses the natural spline conditions, zero curvature at both ends:
+
 | End | Condition | Rationale |
 |---|---|---|
-| Short end | $f''(0) = 0$ | The level at $t = 0$ is already fixed by KOFR. Zero curvature is the "natural" spline end condition: it imposes no bend that the data do not require. The slope is left free, because it carries the market's expectation of the next policy moves. |
-| Long end | $f'(T) = 0$ at the last knot $T$ | Beyond the last benchmark there is no market information, and expectations about rates far in the future should change slowly. A zero slope makes the fitted curve join the flat extension with no jump in level or slope. |
+| Short end | $f''(0) = 0$ | The slope of the forward curve near $t = 0$ carries the market's expected direction of the next policy moves, so it is left free. Zero curvature only assumes that those moves are not expected to speed up or slow down. The short end is also where the data are densest, with KOFR, two MSBs and the 2-year KTB close together, so the condition has little effect there. |
+| Long end | $f''(30) = 0$ | A forward rate 30 years out is the long-run expected short rate plus a term premium. The expected short rate has settled at its long-run level, and the term premium changes slowly with maturity, so the forward curve should not be bending there. |
 
-**How central banks handle the same issue.** Central banks that use splines do not impose boundary conditions by hand. They solve an optimization rather than a system of equations: they minimize pricing errors plus a roughness penalty $\lambda \int f''(t)^2\,dt$ on the forward curve. The penalty itself pushes the curvature to zero at both ends, which is the same natural condition used here at the short end. The Bank of England goes further at the long end: its penalty grows with maturity, so the long-end forwards come out nearly flat. The condition $f'(T) = 0$ is the exact-fit counterpart of that design.
+**Why not both conditions at 30 years.** Economically, $f'(30) = 0$ and $f''(30) = 0$ together would say that the curve has fully levelled off, since the forward from 30 to 31 years should barely differ from the forward from 31 to 32 years. That choice was rejected for two reasons:
 
-A natural condition at the long end, $f''(T) = 0$, was not used: zero curvature still allows the forward curve to keep sloping, so it would extrapolate linearly without bound.
+- **Stability.** With both conditions at one end, the spline is determined by marching from that end, and an error in one price grows by a factor of about $2 + \sqrt{3} \approx 3.7$ at each knot. A small error in a thinly traded 30-year price would swing the short end, where most credit trades sit. With one condition at each end, errors instead shrink by about the same factor away from their source.
+- **Implementation.** Standard spline solvers, including QuantLib and SciPy, take one boundary condition per end.
+
+**How central banks handle the same issue.** Central banks that use splines do not impose boundary conditions by hand. They solve an optimization rather than a system of equations: they minimize pricing errors plus a roughness penalty $\lambda \int f''(t)^2\,dt$ on the forward curve. The penalty itself pushes the curvature to zero at both ends, which is the same natural condition used here. The Bank of England also increases the penalty with maturity, so its long-end forwards come out nearly flat.
+
+**Robustness check.** Because the boundary choice can move the forwards near the ends of the curve, the index should be recomputed with the alternative $f''(0) = 0$ and $f'(30) = 0$ to confirm that the spreads do not depend on it.
 
 ### 4.5 Comparison of curve-fitting methods
 
