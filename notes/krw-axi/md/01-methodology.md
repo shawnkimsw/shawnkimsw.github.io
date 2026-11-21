@@ -3,18 +3,17 @@ title: Methodology
 order: 1
 ---
 
-
 # KRW AXI methodology
 
 KRW AXI applies the design of the Across-the-Curve Credit Spread Index (AXI) to the Korean bond market. It measures the cost of borrowing above the risk-free rate across the full maturity curve, using actual transaction data. This page covers the background of AXI, why Korea needs a counterpart, and how KRW AXI is built.
 
 ## 1. Background: AXI
 
-### The LIBOR transition
+### 1.1 The LIBOR transition
 
 LIBOR was a credit-sensitive rate: it reflected what banks paid to borrow unsecured, so loans that referenced it moved with banks' own funding costs. Its replacement in the US, SOFR, is a secured overnight rate backed by Treasuries. SOFR is close to risk-free, so it carries no credit component. When bank funding stress rises, SOFR does not move with it, and lenders whose costs do rise are left exposed.
 
-### Design
+### 1.2 Design
 
 AXI was designed by Antje Berndt, Darrell Duffie and Yichao Zhu (working paper 2020; published 2023) as a credit spread to add on top of SOFR. Its key choices are:
 
@@ -22,7 +21,7 @@ AXI was designed by Antje Berndt, Darrell Duffie and Yichao Zhu (working paper 2
 - **Transaction-based:** spreads come from actual trades, not quotes or expert judgment, which makes the index harder to manipulate.
 - **Volume-weighted:** trades are weighted by transaction and issuance volumes, so the index follows where banks actually fund themselves.
 
-### Adoption
+### 1.3 Adoption
 
 | Year | Milestone |
 |---|---|
@@ -35,9 +34,15 @@ AXI was designed by Antje Berndt, Darrell Duffie and Yichao Zhu (working paper 2
 
 ## 2. Why Korea
 
+### 2.1 The missing credit benchmark
+
 Korea faces the same gap. KOFR, the Korean counterpart of SOFR, is a risk-free overnight rate computed from repo transactions backed by Korea Treasury Bonds and Monetary Stabilization Bonds. Like SOFR, it carries no credit component.
 
+### 2.2 The 2022 funding stress
+
 The gap became visible in 2022. The Bank of Korea raised rates aggressively to fight post-COVID inflation, tightening funding conditions across the corporate sector. Then a major project finance deal, Legoland Korea, defaulted, and liquidity in the money market dried up. KOFR tracked the overnight risk-free rate, but there was no benchmark for stress in long-term borrowing. Existing measures, such as the KOFIA AA- 3-year corporate spread, are quote-based, lag the market and cover a single maturity.
+
+### 2.3 KRW AXI and other AXI implementations
 
 The Chinese AXI, built by Tsinghua University in 2022, showed that the design carries over to other markets. KRW AXI fills the Korean gap with a transaction-based credit spread across the curve, designed to sit on top of KOFR.
 
@@ -53,7 +58,7 @@ The Chinese AXI, built by Tsinghua University in 2022, showed that the design ca
 
 The risk-free curve is built from two families of bonds: Korea Treasury Bonds (KTBs), issued by the Ministry of Economy and Finance to fund the government, and Monetary Stabilization Bonds (MSBs), issued by the Bank of Korea to absorb excess liquidity. Both are treated as government bonds, and both are eligible collateral for the repo transactions behind KOFR.
 
-### Korea Treasury Bonds
+### 3.1 Korea Treasury Bonds
 
 KTBs are fixed-rate bonds with semiannual coupons. They are sold through competitive auctions to primary dealers every month, and the coupon rate is set in multiples of 0.125%.
 
@@ -70,7 +75,7 @@ To keep each benchmark large and liquid, KTBs use fungible issuance: a new issue
 
 A 2-year KTB is also auctioned regularly. Each issue is named by its coupon and maturity: KTB 02625-2703, for example, pays a 2.625% coupon and matures in March 2027.
 
-### Monetary Stabilization Bonds
+### 3.2 Monetary Stabilization Bonds
 
 MSBs cover the short end of the curve, where KTBs are scarce.
 
@@ -83,7 +88,7 @@ MSBs cover the short end of the curve, where KTBs are scarce.
 
 The 91-day MSB is a discount bond with a single cash flow at maturity, so it gives the cleanest observation of the short-end rate. A 182-day MSB was issued regularly until 2021, when it was replaced by the 3-year MSB. In August 2026 the Bank of Korea lengthened the fungible period of the 1-year MSB from two to three months, with new issues on the 1st of March, June, September and December.
 
-### Instruments used in the curve
+### 3.3 Instruments used in the curve
 
 | Maturity | Instrument |
 |---|---|
@@ -94,13 +99,13 @@ The 91-day MSB is a discount bond with a single cash flow at maturity, so it giv
 
 On-the-run issues carry most of the trading volume, so their prices are the most reliable measure of risk-free borrowing. Off-the-run bonds trade far less and carry a liquidity premium that would bias the risk-free curve upward.
 
-### Quoting and settlement
+### 3.4 Quoting and settlement
 
 Korean bonds are quoted in yield, and trades settle at the dirty price, including accrued interest. Accrued interest uses an Actual/365 day count. The curve is therefore fitted to dirty prices computed from the quoted yields.
 
 ## 4. Risk-free term structure
 
-### Notation
+### 4.1 Notation
 
 All rates use continuous compounding. The curve is parametrized by the instantaneous forward rate $f(t)$.
 
@@ -114,7 +119,7 @@ All rates use continuous compounding. The curve is parametrized by the instantan
 
 The spot rate is the average of the forward rates up to $t$, and the forward rate is the marginal rate at $t$. Each relation is derived in Appendix A.
 
-### Spline on the forward curve
+### 4.2 Spline on the forward curve
 
 The forward curve is represented as a cubic spline in a B-spline basis:
 
@@ -124,53 +129,72 @@ $$
 
 Each $B_i$ is a piecewise cubic that is nonzero over only a few adjacent knot intervals and is already C2 at the knots. Any weighted sum of them is therefore a C2 cubic spline, so continuity does not need to be imposed as separate equations.
 
-### Fitting procedure
-
-**Knots.** Knots are placed at $t_0 = 0$ and at the maturities of the $N$ benchmark instruments, $t_1 < \dots < t_N$, with $t_N = 10$ years. A cubic spline on these knots has $N + 3$ coefficients.
-
-**Conditions.** The coefficients are pinned down by $N + 3$ equations:
-
-| Condition | Equations | Role |
-|---|---|---|
-| Short-rate anchor: $f(0) = \text{KOFR}$ | 1 | Ties the curve to the observed overnight rate |
-| Exact repricing of each benchmark bond | $N$ | Data |
-| Short-end boundary: $f''(0) = 0$ | 1 | Additional assumption |
-| Long-end boundary: $f'(t_N) = 0$ | 1 | Additional assumption |
-
-Each repricing equation is
-
-$$
-\text{Price}_k = \sum_j \text{CF}_{k,j}\,\exp\left(-\int_0^{t_{k,j}} f(u)\,du\right), \qquad k = 1, \dots, N
-$$
-
-where $\text{Price}_k$ is the dirty price implied by the quoted yield. The integral of a B-spline has a closed form, so each model price is cheap to compute.
-
-**Solving.** A coupon bond's price depends on the forward curve over its whole life, so its equation involves every segment up to its maturity. The prices are also nonlinear in the coefficients through the exponential. The $N + 3$ equations are therefore solved together with Newton's method, starting from a flat curve at KOFR. With about six instruments, this converges in a few iterations.
-
-**Extrapolation.** Beyond $t_N$, the forward curve is held flat at $f(t_N)$. Credit bonds with maturities past the last benchmark are discounted on this flat extension.
-
-### Rationale for the boundary conditions
-
-Repricing the benchmarks leaves two degrees of freedom, so two additional assumptions are needed. Each is chosen to add as little structure as possible where the data say nothing.
-
-- **Long end, $f'(t_N) = 0$.** Beyond the last benchmark there is no market information, and expectations about rates far in the future should change slowly. Setting the slope of the forward curve to zero at the last knot makes the fitted curve join a flat forward extension smoothly, with no jump in level or slope. This matches the standard practice of flat-forward extrapolation and the Bank of England's view that the curve should be more flexible at the short end than at the long end.
-- **Short end, $f''(0) = 0$.** The level at $t = 0$ is already fixed by KOFR. Setting the curvature to zero is the "natural" spline end condition: it imposes no bend that the data do not require. The slope at the short end is left free, because it carries the market's expectation of the next policy moves.
-
-### Alternatives considered
-
-| Method | Used by | Why not used here |
-|---|---|---|
-| Natural spline, $f'' = 0$ at both ends | Textbook default | At the long end, zero curvature still allows a sloped forward curve, which then extrapolates linearly without bound |
-| Smoothing spline with a roughness penalty $\lambda \int f''(t)^2\,dt$ | Federal Reserve (Fisher, Nychka and Zervos), Bank of England (variable roughness penalty) | Allows pricing errors to gain smoothness. Suited to fitting many bonds; with six on-the-run benchmarks, an exact fit is preferred |
-| Monotone convex | Hagan and West; common on dealer desks | Keeps forwards positive, but its forward curve is only continuous, not smooth |
-| Nelson–Siegel–Svensson | Most central banks in the BIS survey | Fixed functional form cannot follow local features of the curve |
-### Why the forward curve
-
 Modeling the forward curve directly keeps it smooth. If the spline is placed on the spot curve instead, the implied forward $f = s + t\,s'$ is one degree less smooth: a quadratic spline on spot rates gives forwards that are continuous but kinked at every knot. Kinks at arbitrary knot dates have no economic meaning and distort anything priced off forward rates.
 
-A spline is preferred over Nelson–Siegel here because the index needs the curve to match current market prices closely. Any fitting error in the risk-free curve would show up directly as a false credit spread. Nelson–Siegel's fixed functional form is interpretable, which suits policy analysis, but it cannot follow local features of the curve.
+### 4.3 Fitting procedure
+
+1. **Knots.** The knots are placed at $t = 0$ and at the maturities of the benchmark instruments in Section 3.3.
+2. **Short-rate anchor.** The forward curve starts at the overnight rate: $f(0) = \text{KOFR}$.
+3. **Exact repricing.** The curve reprices every benchmark bond exactly at its dirty price, using the repricing equation below.
+4. **Two additional assumptions.** The anchor and the bond prices leave two degrees of freedom, one at each end of the curve. They are fixed by the boundary conditions in Section 4.4.
+5. **Solving.** A coupon bond's price depends on the forward curve over its whole life, so its equation involves every segment up to its maturity, and it is nonlinear in the coefficients through the exponential. All equations are therefore solved together with Newton's method, starting from a flat curve at KOFR.
+6. **Extrapolation.** Beyond the last benchmark, the forward curve is held flat at its value at the last knot. Credit bonds with longer maturities are discounted on this flat extension.
+
+The repricing equation for benchmark bond $k$ is
+
+$$
+\text{Price}_k = \sum_j \text{CF}_{k,j}\,\exp\left(-\int_0^{t_{k,j}} f(u)\,du\right)
+$$
+
+The integral of a B-spline has a closed form, so each model price is cheap to compute.
+
+### 4.4 Boundary conditions
+
+| End | Condition | Rationale |
+|---|---|---|
+| Short end | $f''(0) = 0$ | The level at $t = 0$ is already fixed by KOFR. Zero curvature is the "natural" spline end condition: it imposes no bend that the data do not require. The slope is left free, because it carries the market's expectation of the next policy moves. |
+| Long end | $f'(T) = 0$ at the last knot $T$ | Beyond the last benchmark there is no market information, and expectations about rates far in the future should change slowly. A zero slope makes the fitted curve join the flat extension with no jump in level or slope. |
+
+**How central banks handle the same issue.** Central banks that use splines do not impose boundary conditions by hand. They solve an optimization rather than a system of equations: they minimize pricing errors plus a roughness penalty $\lambda \int f''(t)^2\,dt$ on the forward curve. The penalty itself pushes the curvature to zero at both ends, which is the same natural condition used here at the short end. The Bank of England goes further at the long end: its penalty grows with maturity, so the long-end forwards come out nearly flat. The condition $f'(T) = 0$ is the exact-fit counterpart of that design.
+
+A natural condition at the long end, $f''(T) = 0$, was not used: zero curvature still allows the forward curve to keep sloping, so it would extrapolate linearly without bound.
+
+### 4.5 Comparison of curve-fitting methods
+
+**Method families.**
+
+| Method | How the curve is fitted | Strengths | Weaknesses |
+|---|---|---|---|
+| Nelson–Siegel | Spot curve set by 4 parameters (level, slope, curvature, decay), chosen to minimize price or yield errors | Smooth, parsimonious, interpretable factors; stable long end | Cannot follow local features; one hump only |
+| Svensson | Nelson–Siegel plus a second hump term, 6 parameters | Fits more curve shapes than Nelson–Siegel | Parameters can be unstable from day to day; still cannot follow local features |
+| Smoothing spline (Fisher, Nychka and Zervos) | Cubic spline on the forward curve; minimizes pricing errors plus a constant roughness penalty | Flexible, with smoothness controlled by $\lambda$ | One penalty for all maturities: too stiff at the short end or too loose at the long end |
+| Variable roughness penalty (Bank of England) | Smoothing spline whose penalty increases with maturity | Flexible at the short end, smooth at the long end | Penalty function must be calibrated |
+| Monotone convex (Hagan and West) | Bootstraps discrete forwards and interpolates them with a shape-preserving rule | Exact fit, local, keeps forwards positive | Forward curve is continuous but not smooth |
+| Exact-fit cubic spline (this project) | Cubic spline on the forward curve, repricing each benchmark exactly | Every benchmark priced exactly, so no fitting error enters the spread; smooth forwards | Needs explicit boundary conditions; sensitive to bad prices because it does not smooth |
+
+**Institutions.** The table below lists the methods reported in the BIS survey of central banks, with later changes noted.
+
+| Institution | Method | Minimized error |
+|---|---|---|
+| Belgium | Svensson or Nelson–Siegel | Weighted prices |
+| Canada | Merrill Lynch exponential spline | Weighted prices |
+| Finland | Nelson–Siegel | Weighted prices |
+| France | Svensson or Nelson–Siegel | Weighted prices |
+| Germany | Svensson | Yields |
+| Italy | Nelson–Siegel | Weighted prices |
+| Japan | Smoothing splines | Prices |
+| Norway | Svensson | Yields |
+| Spain | Svensson | Weighted prices |
+| Sweden | Smoothing splines and Svensson | Yields |
+| Switzerland | Svensson | Yields |
+| United Kingdom | Variable roughness penalty (Svensson until 1998) | Weighted prices |
+| United States (Federal Reserve) | Smoothing splines in the survey; the Board's published curve now uses Svensson on off-the-run Treasuries (Gürkaynak, Sack and Wright) | Weighted prices |
+
+**Why this project uses an exact-fit spline.** Most central banks use Nelson–Siegel or Svensson because they want a smooth, interpretable curve for policy analysis. KRW AXI has a different goal: any fitting error in the risk-free curve would show up directly as a false credit spread. With a small set of liquid on-the-run benchmarks, an exact fit removes that error, and placing the spline on the forward curve keeps the forwards smooth.
 
 ## 5. Credit spread
+
+### 5.1 Z-spread
 
 For each credit bond trade, the Z-spread is the constant spread $z$ over the spot curve that reprices the trade:
 
@@ -178,12 +202,23 @@ $$
 \text{Dirty price} = \sum_j \text{CF}_j\,e^{-(s(t_j) + z)\,t_j}
 $$
 
+### 5.2 Why the Z-spread
+
 The Z-spread is used rather than a yield spread because a bond's yield depends on its cash-flow timing along the curve, not only on its credit risk. On an upward-sloping curve, a coupon bond yields less than a zero-coupon bond of the same maturity, so a yield spread would mix coupon effects into the credit measure.
 
 ## 6. Aggregation
 
-Trade-level Z-spreads are cleaned and grouped by maturity bucket. Within each bucket, the spreads are aggregated as a volume-weighted median, which keeps large trades influential while limiting the effect of outliers. The index is computed daily.
+### 6.1 Maturity buckets
 
+Trade-level Z-spreads are cleaned and grouped by maturity bucket.
+
+### 6.2 Volume-weighted median
+
+Within each bucket, the spreads are aggregated as a volume-weighted median, which keeps large trades influential while limiting the effect of outliers.
+
+### 6.3 Frequency
+
+The index is computed daily.
 
 ## Appendix A. Derivations of the term structure relations
 
@@ -278,4 +313,5 @@ For a KTB with an annual coupon rate $C$ paid semiannually, $c = 100\,C/2$.
 - Bank for International Settlements (2005). *Zero-coupon yield curves: technical documentation.* BIS Papers No 25.
 - Fisher, M., Nychka, D. and Zervos, D. (1995). *Fitting the term structure of interest rates with smoothing splines.* Federal Reserve Board, FEDS Working Paper 95-1.
 - Anderson, N. and Sleath, J. (2001). *New estimates of the UK real and nominal yield curves.* Bank of England Working Paper No 126.
+- Gürkaynak, R., Sack, B. and Wright, J. (2007). *The U.S. Treasury yield curve: 1961 to the present.* Journal of Monetary Economics 54(8), 2291–2304.
 - Hagan, P. and West, G. (2006). *Interpolation methods for curve construction.* Applied Mathematical Finance 13(2).
