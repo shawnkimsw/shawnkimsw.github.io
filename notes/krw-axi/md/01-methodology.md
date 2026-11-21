@@ -70,8 +70,6 @@ To keep each benchmark large and liquid, KTBs use fungible issuance: a new issue
 
 A 2-year KTB is also auctioned regularly. Each issue is named by its coupon and maturity: KTB 02625-2703, for example, pays a 2.625% coupon and matures in March 2027.
 
-Because new issues fall on the 10th of March, June, September or December and coupons are paid every six months, KTB coupon dates lie on a quarterly grid. Most of these coupon dates fall between the maturities of the benchmark bonds, so their discount factors are not observed directly and have to come from the fitted curve.
-
 ### Monetary Stabilization Bonds
 
 MSBs cover the short end of the curve, where KTBs are scarce.
@@ -118,7 +116,7 @@ The spot rate is the average of the forward rates up to $t$, and the forward rat
 
 ### Spline on the forward curve
 
-The curve is anchored at KOFR at $t = 0$ and fitted to the instruments listed in Section 3. The forward curve is represented as a cubic spline in a B-spline basis:
+The forward curve is represented as a cubic spline in a B-spline basis:
 
 $$
 f(t) = \sum_i c_i\,B_i(t)
@@ -126,14 +124,46 @@ $$
 
 Each $B_i$ is a piecewise cubic that is nonzero over only a few adjacent knot intervals and is already C2 at the knots. Any weighted sum of them is therefore a C2 cubic spline, so continuity does not need to be imposed as separate equations.
 
-The coefficients $c_i$ are chosen so that the model prices the benchmark bonds:
+### Fitting procedure
+
+**Knots.** Knots are placed at $t_0 = 0$ and at the maturities of the $N$ benchmark instruments, $t_1 < \dots < t_N$, with $t_N = 10$ years. A cubic spline on these knots has $N + 3$ coefficients.
+
+**Conditions.** The coefficients are pinned down by $N + 3$ equations:
+
+| Condition | Equations | Role |
+|---|---|---|
+| Short-rate anchor: $f(0) = \text{KOFR}$ | 1 | Ties the curve to the observed overnight rate |
+| Exact repricing of each benchmark bond | $N$ | Data |
+| Short-end boundary: $f''(0) = 0$ | 1 | Additional assumption |
+| Long-end boundary: $f'(t_N) = 0$ | 1 | Additional assumption |
+
+Each repricing equation is
 
 $$
-\text{Price}_k = \sum_j \text{CF}_{k,j}\,\exp\left(-\int_0^{t_{k,j}} f(u)\,du\right)
+\text{Price}_k = \sum_j \text{CF}_{k,j}\,\exp\left(-\int_0^{t_{k,j}} f(u)\,du\right), \qquad k = 1, \dots, N
 $$
 
-The integral of a B-spline has a closed form, so each model price is cheap to compute. Since prices are nonlinear in $c_i$, the system is solved numerically.
+where $\text{Price}_k$ is the dirty price implied by the quoted yield. The integral of a B-spline has a closed form, so each model price is cheap to compute.
 
+**Solving.** A coupon bond's price depends on the forward curve over its whole life, so its equation involves every segment up to its maturity. The prices are also nonlinear in the coefficients through the exponential. The $N + 3$ equations are therefore solved together with Newton's method, starting from a flat curve at KOFR. With about six instruments, this converges in a few iterations.
+
+**Extrapolation.** Beyond $t_N$, the forward curve is held flat at $f(t_N)$. Credit bonds with maturities past the last benchmark are discounted on this flat extension.
+
+### Rationale for the boundary conditions
+
+Repricing the benchmarks leaves two degrees of freedom, so two additional assumptions are needed. Each is chosen to add as little structure as possible where the data say nothing.
+
+- **Long end, $f'(t_N) = 0$.** Beyond the last benchmark there is no market information, and expectations about rates far in the future should change slowly. Setting the slope of the forward curve to zero at the last knot makes the fitted curve join a flat forward extension smoothly, with no jump in level or slope. This matches the standard practice of flat-forward extrapolation and the Bank of England's view that the curve should be more flexible at the short end than at the long end.
+- **Short end, $f''(0) = 0$.** The level at $t = 0$ is already fixed by KOFR. Setting the curvature to zero is the "natural" spline end condition: it imposes no bend that the data do not require. The slope at the short end is left free, because it carries the market's expectation of the next policy moves.
+
+### Alternatives considered
+
+| Method | Used by | Why not used here |
+|---|---|---|
+| Natural spline, $f'' = 0$ at both ends | Textbook default | At the long end, zero curvature still allows a sloped forward curve, which then extrapolates linearly without bound |
+| Smoothing spline with a roughness penalty $\lambda \int f''(t)^2\,dt$ | Federal Reserve (Fisher, Nychka and Zervos), Bank of England (variable roughness penalty) | Allows pricing errors to gain smoothness. Suited to fitting many bonds; with six on-the-run benchmarks, an exact fit is preferred |
+| Monotone convex | Hagan and West; common on dealer desks | Keeps forwards positive, but its forward curve is only continuous, not smooth |
+| Nelson–Siegel–Svensson | Most central banks in the BIS survey | Fixed functional form cannot follow local features of the curve |
 ### Why the forward curve
 
 Modeling the forward curve directly keeps it smooth. If the spline is placed on the spot curve instead, the implied forward $f = s + t\,s'$ is one degree less smooth: a quadratic spline on spot rates gives forwards that are continuous but kinked at every knot. Kinks at arbitrary knot dates have no economic meaning and distort anything priced off forward rates.
