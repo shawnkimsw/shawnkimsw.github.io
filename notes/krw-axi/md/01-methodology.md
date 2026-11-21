@@ -161,34 +161,12 @@ A natural condition at the long end, $f''(T) = 0$, was not used: zero curvature 
 
 ### 4.5 Comparison of curve-fitting methods
 
-**Method families.**
-
-| Method | How the curve is fitted | Strengths | Weaknesses |
-|---|---|---|---|
-| Nelson–Siegel | Spot curve set by 4 parameters (level, slope, curvature, decay), chosen to minimize price or yield errors | Smooth, parsimonious, interpretable factors; stable long end | Cannot follow local features; one hump only |
-| Svensson | Nelson–Siegel plus a second hump term, 6 parameters | Fits more curve shapes than Nelson–Siegel | Parameters can be unstable from day to day; still cannot follow local features |
-| Smoothing spline (Fisher, Nychka and Zervos) | Cubic spline on the forward curve; minimizes pricing errors plus a constant roughness penalty | Flexible, with smoothness controlled by $\lambda$ | One penalty for all maturities: too stiff at the short end or too loose at the long end |
-| Variable roughness penalty (Bank of England) | Smoothing spline whose penalty increases with maturity | Flexible at the short end, smooth at the long end | Penalty function must be calibrated |
-| Monotone convex (Hagan and West) | Bootstraps discrete forwards and interpolates them with a shape-preserving rule | Exact fit, local, keeps forwards positive | Forward curve is continuous but not smooth |
-| Exact-fit cubic spline (this project) | Cubic spline on the forward curve, repricing each benchmark exactly | Every benchmark priced exactly, so no fitting error enters the spread; smooth forwards | Needs explicit boundary conditions; sensitive to bad prices because it does not smooth |
-
-**Institutions.** The table below lists the methods reported in the BIS survey of central banks, with later changes noted.
-
-| Institution | Method | Minimized error |
-|---|---|---|
-| Belgium | Svensson or Nelson–Siegel | Weighted prices |
-| Canada | Merrill Lynch exponential spline | Weighted prices |
-| Finland | Nelson–Siegel | Weighted prices |
-| France | Svensson or Nelson–Siegel | Weighted prices |
-| Germany | Svensson | Yields |
-| Italy | Nelson–Siegel | Weighted prices |
-| Japan | Smoothing splines | Prices |
-| Norway | Svensson | Yields |
-| Spain | Svensson | Weighted prices |
-| Sweden | Smoothing splines and Svensson | Yields |
-| Switzerland | Svensson | Yields |
-| United Kingdom | Variable roughness penalty (Svensson until 1998) | Weighted prices |
-| United States (Federal Reserve) | Smoothing splines in the survey; the Board's published curve now uses Svensson on off-the-run Treasuries (Gürkaynak, Sack and Wright) | Weighted prices |
+| Method | Used by | How the curve is fitted | Strengths | Weaknesses |
+|---|---|---|---|---|
+| Nelson–Siegel / Svensson | Federal Reserve, Deutsche Bundesbank, Swiss National Bank, Norges Bank, and most central banks in the BIS survey | Spot curve set by a few parameters for level, slope and one or two humps, chosen to minimize price or yield errors | Smooth and parsimonious; interpretable factors; stable long end | Cannot follow local features of the curve; Svensson parameters can be unstable from day to day |
+| Smoothing spline | Bank of England (variable roughness penalty), Bank of Japan, Sveriges Riksbank | Cubic spline on the forward curve; minimizes pricing errors plus a roughness penalty, which the Bank of England increases with maturity | Flexible where the data are rich and smooth where they are sparse | Penalty must be calibrated; bonds are not priced exactly |
+| Monotone convex | US Treasury (official yield curve); dealer desks | Bootstraps discrete forwards from benchmark securities and interpolates them with a shape-preserving rule | Exact fit; local; keeps forwards positive | Forward curve is continuous but not smooth |
+| Exact-fit cubic spline | This project | Cubic spline on the forward curve, repricing each benchmark exactly | No fitting error enters the spread; smooth forwards | Needs explicit boundary conditions; sensitive to bad prices because it does not smooth |
 
 **Why this project uses an exact-fit spline.** Most central banks use Nelson–Siegel or Svensson because they want a smooth, interpretable curve for policy analysis. KRW AXI has a different goal: any fitting error in the risk-free curve would show up directly as a false credit spread. With a small set of liquid on-the-run benchmarks, an exact fit removes that error, and placing the spline on the forward curve keeps the forwards smooth.
 
