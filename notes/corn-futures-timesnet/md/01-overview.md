@@ -64,7 +64,7 @@ $\rho$ is discretized into $K = 8$ buckets with fixed edges
 
 $$-0.00587,\ -0.00344,\ -0.00163,\ 0,\ 0.00163,\ 0.00344,\ 0.00587,$$
 
-so bucket $k$ is $\{\rho : e_{k} < \rho \le e_{k+1}\}$ with $e_0 = -\infty$ and $e_8 = +\infty$. The edges are symmetric around zero. The share of rows in each bucket differs across the three periods of the paper data, which matters for evaluation (note 4):
+so bucket $k$ is $\{\rho : e_{k} < \rho \le e_{k+1}\}$ with $e_0 = -\infty$ and $e_8 = +\infty$. The edges are symmetric around zero. The share of rows in each bucket differs across the three periods of the paper data (70 / 10 / 20 split), which matters for evaluation (note 4):
 
 | Split | Bucket 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|---|
@@ -74,7 +74,9 @@ so bucket $k$ is $\{\rho : e_{k} < \rho \le e_{k+1}\}$ with $e_0 = -\infty$ and 
 
 ## 5. Splits
 
-The series is split chronologically, 70 / 10 / 20 by rows. Every split also carries the 60 rows before its first label as input history, and the last 10 rows of each split have no label inside the split. That gives 2,561 training, 368 validation and 742 test samples on the paper data, and 2,499, 357 and 724 on `corn_clean_v2.csv` with the one-day execution lag. Features are standardized with the mean and standard deviation of the training rows only.
+The series is split chronologically by rows, 60 / 20 / 20 by default (`train_ratio` and `test_ratio` in `configs/default.yaml`). Every split also carries the 60 rows before its first label as input history, and the last 10 rows of each split have no label inside the split. On `corn_clean_v2.csv` with the one-day execution lag that gives 2,132 training, 724 validation and 724 test samples: training 2006-10-11 to 2015-07-17, validation 2015-07-20 to 2018-06-15 and test 2018-06-18 to 2021-05-14. Features are standardized with the mean and standard deviation of the training rows only.
+
+The 2024 paper split 70 / 10 / 20, which gives 2,561 training, 368 validation and 742 test samples on the paper data, and 2,499, 357 and 724 on `corn_clean_v2.csv`. Its validation set, 2016-12-30 to 2018-06-15, was small and unusually calm (section 4). The default split moves a tenth of the rows from training to validation, so model selection and the temperature rest on a validation set twice as large and less unusual, while the test rows stay the same.
 
 ## 6. Repository layout
 
