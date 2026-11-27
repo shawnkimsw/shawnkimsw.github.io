@@ -94,9 +94,14 @@ The reconstruction also showed that the vendor's target from 2015-04-06 to 2015-
 
 The row of 2007-01-02 is a day CBOT was closed (national day of mourning for President Ford); it is dropped and its return merged into the next row. Six trading days are missing from the original data (2007-12-14, 2008-03-14, 2008-12-12, 2009-03-13, 2010-05-14 and 2009-07-02); they are kept as gaps, and the reconstruction treats the next row's return as the two-day return the vendor's target already used.
 
-### 3.6 Verified
+### 3.6 WASDE balance sheet late or stale (fixed)
 
-- **WASDE:** none of the 174 changes of `supply_and_demand` happens before the corresponding release.
+`supply_and_demand` is the world corn ratio (total domestic use $-$ exports $+$ imports) / production for the projected marketing year, from the WASDE "World Corn Supply and Use" table. The vendor's values match this definition, within the rounding of the published figures, in all 172 reports checked as first published, and none is used before its release. But the vendor never took up three reports (August 2009, February 2017 and May 2017: 61 rows kept the previous month's value) and took up five one or two days after their release (2006-10-12, 2006-11-09, 2010-02-09, 2016-04-12 and 2016-05-10: 6 rows).
+
+**Fix.** The column is rebuilt from the 180 archived WASDE issues of 2006-09 to 2021-08 (`cornfutures/data/resources/wasde_world_corn.csv`, rebuilt from USDA ESMIS by `scripts/fetch_wasde.py`). A report counts from its release row if it came out before the CBOT close (8:30 am ET until 2012, noon ET from 2013), otherwise from the next trading row. The reissues of 2008-12-12 and 2018-12-14 count from their own release, and the previous report stays in effect through the cancelled October 2013 and January 2019 reports. On the other rows the rebuilt values differ from the vendor's by at most $1.7 \times 10^{-5}$, within the rounding of the published figures.
+
+### 3.7 Verified
+
 - **Rate:** `rate` equals `DFF` of the previous calendar day on every row.
 - **Vendor switch days:** all 72 switches of the vendor's front in the kept period fall on the first trading day after the contract's last trading day.
 
