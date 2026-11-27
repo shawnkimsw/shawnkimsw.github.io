@@ -36,7 +36,7 @@ Let $F^{(1)}_t, F^{(2)}_t, F^{(3)}_t$ be the prices of the vendor's first, secon
 | `time_to_expiry` | $(T_t - t)$ in calendar days $/\,365$ | Maturity of the held contract |
 | `days_to_roll` | Business days from $t$ to $R_t$, $/\,21$ | Position in the roll cycle |
 | `rate` | `DFF` of the previous day | Financing rate |
-| `supply_and_demand` | Domestic consumption / production (WASDE) | Tightness of the balance sheet |
+| `supply_and_demand` | World corn (domestic use $-$ exports $+$ imports) / production, projected marketing year (WASDE) | Tightness of the world balance sheet |
 | `positions` | $\log(\text{long} / \text{short})$ of CFTC managed money, futures and options | Speculative positioning |
 | `options_oi_share` | $1 -$ futures-only / combined open interest | Weight of options in open interest |
 | `on_the_run` | $V^{(1)}_t / (V^{(1)}_t + V^{(2)}_t + V^{(3)}_t)$ | Share of volume in the front contract, which falls around the roll |
