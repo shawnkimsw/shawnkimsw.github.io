@@ -17,29 +17,44 @@ This project forecasts CME corn futures with a modified TimesNet. The model does
 
 ## 1. Data
 
-Daily observations from **2006-09-27 to 2021-09-02** (3,758 rows). The raw inputs were the corn futures curve (prices and volumes of the three nearest contracts and the spot price), soybean and wheat futures, USDA WASDE balance-sheet data, CFTC Commitments of Traders positions and the 3-month Treasury bill rate (FRED `TB3MS`). The dataset is not published because part of it comes from licensed market data.
+The model runs on `data/corn_clean_v2.csv`: one row per CBOT trading day from **2006-10-11 to 2021-05-14** (3,670 rows), built by `scripts/prepare_data.py` from the original dataset (`inputv3.csv`, 3,758 rows from 2006-09-27 to 2021-09-02) and public data. The raw inputs were the corn futures curve (prices and volumes of the three nearest contracts and the spot price), soybean and wheat futures, USDA WASDE balance-sheet data, CFTC Commitments of Traders positions and the effective federal funds rate (FRED `DFF`). The dataset is not published because part of it comes from licensed market data.
+
+Rows are removed where the original data is wrong: everything from 2021-05-17 on (the vendor curve lacks the Jul 2021 contract and drops Sep 2021 early, so every price-derived column is wrong for 77 rows), 2007-01-02 (CBOT was closed for the national day of mourning for President Ford; its return is merged into the next row) and the first 10 rows, which have no full window of held returns. Six trading days are missing from the original data (the last trading days 2007-12-14, 2008-03-14, 2008-12-12, 2009-03-13 and 2010-05-14, and 2009-07-02); the next row then carries a two-day return.
+
+**Timing.** A forecast made after the close of day $t$ is executed at the close of $t+1$. A value enters row $t$ only if it was public before the evening of $t$: prices at the close of $t$, the federal funds rate of $t-1$ (published on the morning of $t$), the WASDE on its release day (noon ET), and a CFTC report from its release date on (normally Friday 3:30 pm ET, after the close, so the Friday row already uses it). The release dates come from the CFTC's published schedules and its announcements for the 2013 and 2018-19 shutdowns and holiday weeks; the earlier rule "as-of date plus three days" used unreleased reports on 70 rows and kept 671 Friday rows one day stale.
+
+**Held contract.** Corn trades in Mar, May, Jul, Sep and Dec contracts. For a contract, the last trading day (LTD) is the business day before the 15th of the contract month and the first notice day (FND) is the last business day of the month before. The position holds the front contract until the close **10 business days before FND**, then switches to the next contract. This matches the roll windows of the S&P GSCI (5th to 9th business day of the month before delivery) and BCOM (6th to 10th) and the 10-day holding period, and it leaves the front about four weeks before expiry. The front's share of the volume of the three nearest contracts falls from 0.59 at 25 business days before FND to 0.48 at 10 days, 0.42 at 5 days and 0.33 on the day before FND, then collapses to 0.15 on FND and below 0.05 from four days after it. The vendor keeps the expiring contract as its front until LTD, so between the roll and LTD (40.8% of the rows) the position holds the vendor's second contract.
 
 ## 2. Features
 
-Let $F^{(1)}_t, F^{(2)}_t, F^{(3)}_t$ be the prices of the first, second and third nearest corn contracts, $V^{(i)}_t$ their volumes, $S_t$ the corn spot price, $P^{soy}_t$ and $P^{wht}_t$ the soybean and wheat futures prices, $\tau_t$ the days to expiry of the front contract and $r^f_t$ the T-bill rate. Each feature is a ratio or a log-ratio, chosen so that it is closer to stationary than the price levels.
+Let $F^{(1)}_t, F^{(2)}_t, F^{(3)}_t$ be the prices of the vendor's first, second and third nearest corn contracts, $V^{(i)}_t$ their volumes, $P^{soy}_t$ and $P^{wht}_t$ the soybean and wheat futures prices, and $T_t$ and $R_t$ the last trading day and the roll date of the contract held after the close of $t$. Each feature is a ratio, a log-ratio or a calendar count, chosen so that it is closer to stationary than the price levels.
 
 | Feature | Definition | Economic meaning |
 |---|---|---|
 | `supplement` | $\log\left(F^{(1)}_t \big/ \sqrt{P^{soy}_t P^{wht}_t}\right)$ | Corn price relative to the geometric mean of two substitute crops |
 | `contango` | $\log\left(F^{(1)}_t / F^{(2)}_t\right)$ | Slope of the front of the curve (contango vs. backwardation) |
-| `holding_cost` | $\dfrac{\log(F^{(1)}_t / S_t)}{\tau_t/360} - r^f_t$ | Annualized basis net of the financing rate, a proxy for storage cost minus convenience yield |
+| `time_to_expiry` | $(T_t - t)$ in calendar days $/\,365$ | Maturity of the held contract |
+| `days_to_roll` | Business days from $t$ to $R_t$, $/\,21$ | Position in the roll cycle |
+| `rate` | `DFF` of the previous day | Financing rate |
 | `supply_and_demand` | Domestic consumption / production (WASDE) | Tightness of the balance sheet |
-| `positions` | $\log(\text{long} / \text{short})$ of CFTC managed money | Speculative positioning |
+| `positions` | $\log(\text{long} / \text{short})$ of CFTC managed money, futures and options | Speculative positioning |
+| `options_oi_share` | $1 -$ futures-only / combined open interest | Weight of options in open interest |
 | `on_the_run` | $V^{(1)}_t / (V^{(1)}_t + V^{(2)}_t + V^{(3)}_t)$ | Share of volume in the front contract, which falls around the roll |
 | `corn_future_10d_return` | $\rho_t$ below | Recent momentum |
 
+`time_to_expiry`, `days_to_roll` and the column `roll_day` (true when the held contract switches at the close of $t$, used by the backtest to charge the roll) follow from the exchange calendar and are known in advance. The original `holding_cost` is not used: a cents/dollars mismatch makes 99.99% of its variance the term $\log(100) \cdot 360/\tau$, a function of days to expiry, and it subtracts the T-bill average of the current month, which is published only after the month ends.
+
 ## 3. Target
 
-With $R_t = F^{(1)}_t / F^{(1)}_{t-1} - 1$ the daily return of the front contract, define the **geometric-average daily return over the 10 days ending at $t$**:
+Let $r_t$ be the daily log return, from the close of the previous row to the close of $t$, of the contract held over that interval. The front's returns are recovered from the original 10-day average: with $L_t = 10 \log(1 + \rho^{\text{vendor}}_t)$, $L_t - L_{t-1} = r^{(1)}_t - r^{(1)}_{t-10}$, and ten starting values from Yahoo `ZC=F` give the whole series, which equals Yahoo's daily returns on all 3,666 rows where Yahoo has both days. The second contract's return follows from $\log F^{(2)} = \log F^{(1)} - c$ with $c$ = `contango`:
 
-$$\rho_t = \left(\prod_{i=0}^{9} (1 + R_{t-i})\right)^{1/10} - 1 .$$
+$$r^{(2)}_t = r^{(1)}_t - (c_t - c_{t-1}),$$
 
-A sample uses the 60 days of features ending at day $t$ and is labeled with the bucket of $\rho_{t+10}$, which covers days $t+1, \dots, t+10$. The input $\rho_t$ covers days $t-9, \dots, t$, so feature and label windows do not overlap.
+and on the day the vendor moves its front to the held contract, $r_t = r^{(1)}_t + c_{t-1}$. The target is the **geometric-average daily return of the held contract over the 10 days ending at $t$**:
+
+$$\rho_t = \exp\left(\frac{1}{10} \sum_{i=0}^{9} r_{t-i}\right) - 1 .$$
+
+A sample uses the 60 days of features ending at day $t$. With execution at the close of $t+1$ it is labeled with the bucket of $\rho_{t+11}$, which covers days $t+2, \dots, t+11$; the paper run, without the execution lag, used $\rho_{t+10}$. The input $\rho_t$ covers days $t-9, \dots, t$, so feature and label windows do not overlap.
 
 The target is an average *daily* return over the next 10 days, not a 10-day cumulative return and not a price path.
 
@@ -49,7 +64,7 @@ $\rho$ is discretized into $K = 8$ buckets with fixed edges
 
 $$-0.00587,\ -0.00344,\ -0.00163,\ 0,\ 0.00163,\ 0.00344,\ 0.00587,$$
 
-so bucket $k$ is $\{\rho : e_{k} < \rho \le e_{k+1}\}$ with $e_0 = -\infty$ and $e_8 = +\infty$. The edges are symmetric around zero. The share of rows in each bucket differs across the three periods, which matters for evaluation (note 4):
+so bucket $k$ is $\{\rho : e_{k} < \rho \le e_{k+1}\}$ with $e_0 = -\infty$ and $e_8 = +\infty$. The edges are symmetric around zero. The share of rows in each bucket differs across the three periods of the paper data, which matters for evaluation (note 4):
 
 | Split | Bucket 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|---|
@@ -59,7 +74,7 @@ so bucket $k$ is $\{\rho : e_{k} < \rho \le e_{k+1}\}$ with $e_0 = -\infty$ and 
 
 ## 5. Splits
 
-The series is split chronologically, 70 / 10 / 20 by rows. Every split also carries the 60 rows before its first label as input history, and the last 10 rows of each split have no label inside the split. That gives 2,561 training, 368 validation and 742 test samples. Features are standardized with the mean and standard deviation of the training rows only.
+The series is split chronologically, 70 / 10 / 20 by rows. Every split also carries the 60 rows before its first label as input history, and the last 10 rows of each split have no label inside the split. That gives 2,561 training, 368 validation and 742 test samples on the paper data, and 2,499, 357 and 724 on `corn_clean_v2.csv` with the one-day execution lag. Features are standardized with the mean and standard deviation of the training rows only.
 
 ## 6. Repository layout
 

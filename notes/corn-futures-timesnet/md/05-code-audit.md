@@ -60,11 +60,47 @@ Consecutive test windows shared a batch and its periods, so future inputs, inclu
 
 The validation and test loaders dropped the last incomplete batch, so 352 of 368 validation windows and 736 of 742 test windows were scored, and early stopping and the temperature were fitted on the reduced validation set. **Fix.** Validation and test now score every window; training still drops its last incomplete batch.
 
-### 2.3 No purge between splits (open)
+### 2.3 Split boundaries (no purge needed)
 
-The last 10 windows of each split are labeled with returns from the next split (note 4, section 4).
+An earlier version of this note listed a missing purge between the splits, claiming that the last 10 windows of each split are labeled with returns from the next split. That is wrong. The label of a window ending at row $t$ is $\rho$ at row $t+h+\ell$, a backward-looking average of the returns of rows $t+\ell+1, \dots, t+h+\ell$, and each split stops its windows so that its last label row is its own last row. Training labels therefore never use returns from the validation period, and validation labels never use returns from the test period. Validation and test windows take the 60 rows before their split as input, which is past information, not leakage. No purge is needed (note 4, section 4).
 
-## 3. Where the paper and the code differ
+## 3. Defects in the data
+
+A second audit checked `inputv3.csv` and the first cleaned dataset against public sources: Yahoo `ZC=F` daily prices, the CBOT holiday calendar and contract rules, USDA WASDE release dates and the CFTC release schedules. The dataset is now rebuilt as `corn_clean_v2.csv` (note 1; column definitions and timing in `data/README.md`).
+
+### 3.1 CFTC reports used before their release (fixed)
+
+The positions were lagged by a fixed rule, "first trading day after the as-of date plus three days". During the 2013-10 and 2018-12 to 2019-03 government shutdowns and in some holiday weeks the CFTC published days to weeks late, so 70 rows used a report that was not yet public. The same rule kept 671 Friday rows one day staler than needed: the report comes out on Friday at 3:30 pm ET, after the close, so with execution at the next close it can already drive the Friday decision.
+
+**Fix.** The release date of every report comes from a table shipped with the package (`cornfutures/data/resources/`): the CFTC release schedule pages for 2010-2021 (archived in the Wayback Machine), the CFTC announcements for the shutdowns and holiday weeks, and for 2006-2009 the third federal business day after the as-of date, a rule that reproduces 617 of the 624 archived dates and is never earlier than the published one. A report is used from the first trading row on or after its release.
+
+### 3.2 Wrong vendor prices in 2021 (fixed)
+
+From 2021-05-17 to 2021-09-02 the vendor curve has no Jul 2021 contract and drops the Sep 2021 contract two weeks before it expires, so every price-derived column, the target included, is wrong on those 77 rows. **Fix.** The dataset ends on 2021-05-14.
+
+### 3.3 The target followed the expiring contract into delivery (fixed)
+
+The vendor's front contract stays the expiring one until its last trading day, two weeks into the delivery month. 22.5% of the rows lie within 15 calendar days of that day, where the front has on average 6.7% of the volume of the three nearest contracts: the target described a contract that a speculative position would not hold.
+
+**Fix.** The target is the 10-day geometric-average daily return of the contract held under a stated rule: the front until 10 business days before its first notice day, then the next contract (note 1, sections 1 and 3). Its daily returns are reconstructed exactly from the vendor's target and `contango`, and they equal Yahoo's on all 3,666 rows where Yahoo has both days. On the rows within 15 days of the vendor front's expiry, the standard deviation of daily log returns is 0.0185 for the held contract against 0.0196 for the vendor front (0.0173 on the other rows); the largest daily move while the position holds the second contract falls from 0.104 to 0.085. A `roll_day` column marks the closes at which the position switches contract, so the backtest can charge the roll.
+
+The reconstruction also showed that the vendor's target from 2015-04-06 to 2015-04-16 does not match the vendor's own prices (by up to 0.047 in the 10-day log return); the rebuilt target uses the consistent returns there.
+
+### 3.4 Days to expiry from a broken input (fixed)
+
+`time_to_expiry` was inferred from `holding_cost`, whose cents/dollars mismatch makes 99.99% of its variance the term $\log(100)\cdot 360/\tau$ and which subtracts the unpublished T-bill average of the current month. **Fix.** `time_to_expiry` counts calendar days to the last trading day of the held contract from the CBOT calendar, and a new `days_to_roll` counts business days to the next roll. Both are known in advance.
+
+### 3.5 Calendar (fixed and reported)
+
+The row of 2007-01-02 is a day CBOT was closed (national day of mourning for President Ford); it is dropped and its return merged into the next row. Six trading days are missing from the original data (2007-12-14, 2008-03-14, 2008-12-12, 2009-03-13, 2010-05-14 and 2009-07-02); they are kept as gaps, and the reconstruction treats the next row's return as the two-day return the vendor's target already used.
+
+### 3.6 Verified
+
+- **WASDE:** none of the 174 changes of `supply_and_demand` happens before the corresponding release.
+- **Rate:** `rate` equals `DFF` of the previous calendar day on every row.
+- **Vendor switch days:** all 72 switches of the vendor's front in the kept period fall on the first trading day after the contract's last trading day.
+
+## 4. Where the paper and the code differ
 
 | Paper | Code and data |
 |---|---|
@@ -77,14 +113,14 @@ The last 10 windows of each split are labeled with returns from the next split (
 | Not mentioned | The value embedding was padded circularly (section 1.4). |
 | Not mentioned | An auxiliary up/down loss was computed in the training loop but never added to the objective; it has been removed. |
 
-## 4. Verified as correct
+## 5. Verified as correct
 
 - **No feature/label overlap:** $\rho_t$ uses days $t-9, \dots, t$ and the label uses days $t+1, \dots, t+10$.
 - **Train-only scaling:** feature scaling is fitted on the training rows only.
 - **Unchanged TimesBlock:** the FFT period selection, Inception blocks and aggregation match the upstream code.
 - **Labels match their definition:** every `group` label equals the bucket of $\rho$ under the stated edges.
 
-## 5. Repository changes
+## 6. Repository changes
 
 - The code was reorganized from the upstream script layout into the `cornfutures` package, with settings in `configs/default.yaml`, a test suite and continuous integration.
 - Unused upstream modules (other models, M4 and UEA loaders) and an unused heavy dependency were removed.
@@ -93,9 +129,8 @@ The last 10 windows of each split are labeled with returns from the next split (
 - Settings that were taken silently from script defaults (`freq`, `top_k`, `num_kernels`, `lradj`) are now listed in `configs/default.yaml` with the values in effect.
 - Datasets, checkpoints and internship materials are excluded from version control.
 
-## 6. Next steps
+## 7. Next steps
 
-1. Purge 10 days between the splits.
-2. Retrain, and report log loss, RPS and ECE against the unconditional and majority-bucket baselines, with uncertainty that accounts for $n_{\text{eff}}$.
-3. Compare with an MSE-trained TimesNet and with simple models on the same features (multinomial logistic regression, gradient boosting).
-4. Backtest with a defined holding rule, costs and a validated threshold.
+1. Retrain on `corn_clean_v2.csv`, and report log loss, RPS and ECE against the unconditional and majority-bucket baselines, with uncertainty that accounts for $n_{\text{eff}}$.
+2. Compare with an MSE-trained TimesNet and with simple models on the same features (multinomial logistic regression, gradient boosting).
+3. Backtest with a defined holding rule, costs including the roll cost on `roll_day`, and a validated threshold.

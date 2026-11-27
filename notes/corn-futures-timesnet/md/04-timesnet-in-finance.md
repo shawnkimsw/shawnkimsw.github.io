@@ -49,7 +49,7 @@ $$\mathrm{SE} \approx \sqrt{\frac{p(1-p)}{n_{\text{eff}}}} \approx \sqrt{\frac{0
 
 on the test set. Top-1 accuracies a few points above $1/8$ are within noise.
 
-Overlap also creates leakage at the split boundaries. The last 10 training windows are labeled with returns that fall inside the validation period, and the last validation windows with returns inside the test period. A purge of at least $h = 10$ days between splits removes this (López de Prado, 2018).
+Overlap does not leak across the split boundaries here. The label of a window ending at $t$ is $\rho$ at row $t+h+\ell$ (with execution lag $\ell$), a backward-looking average of returns up to that row, and each split ends its windows so that its last label row is its own last row. The last training labels therefore use only training-period returns, and the first validation label starts after the training period ends, so no purge between the splits is needed. A purge (López de Prado, 2018) is required when labels look forward from the last training row, which is not the case for this loader.
 
 ## 5. Capacity against information
 
