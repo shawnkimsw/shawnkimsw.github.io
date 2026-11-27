@@ -31,7 +31,7 @@ Every sample in a batch is folded along the same periods, chosen with all the ot
 - **The prediction for a window depends on which other windows share its batch.** The model is not a function of its own input.
 - **Look-ahead in validation and test.** Those loaders do not shuffle, so a batch of 32 holds 32 consecutive windows. The window that ends 10 days after window $i$ contains $\rho_{t+10}$ among its inputs, and $\rho_{t+10}$ is exactly the value whose bucket is window $i$'s label. That future value therefore enters window $i$'s period selection. The channel is narrow, because only a discrete choice of $k$ periods is affected, but the evaluation is not strictly out of sample.
 
-The fix is to select the periods for each sample from its own spectrum.
+The code now selects the periods and their weights for each sample from its own spectrum (note 5). For a batch of one window the output is identical to the original implementation, and tests confirm that a window's prediction no longer changes with the other windows in its batch or with their order.
 
 ## 3. Non-stationarity and normalization
 
