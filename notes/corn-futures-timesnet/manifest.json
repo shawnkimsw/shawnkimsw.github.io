@@ -1,1 +1,27 @@
-[]
+[
+  {
+    "file": "01-overview.md",
+    "title": "Overview, data and target",
+    "order": 1
+  },
+  {
+    "file": "02-model.md",
+    "title": "Model \u2014 TimesNet with a classification head",
+    "order": 2
+  },
+  {
+    "file": "03-forecast-calibration-signal.md",
+    "title": "Probabilistic forecast, calibration and the trading signal",
+    "order": 3
+  },
+  {
+    "file": "04-timesnet-in-finance.md",
+    "title": "Problems of applying TimesNet to financial returns",
+    "order": 4
+  },
+  {
+    "file": "05-code-audit.md",
+    "title": "Code audit and changes",
+    "order": 5
+  }
+]
