@@ -36,6 +36,18 @@ The code computed $\sigma^2 = \sum_k q_k v_k$, the first term of the law of tota
 
 **Fix.** $\sigma^2 = \sum_k q_k s_k - \mu^2$ (note 3, section 4), checked in the tests against the explicit two-term decomposition.
 
+### 1.4 The value embedding wrapped the window around
+
+The value embedding is a convolution with kernel size 3 over the 60 days of the window, and it used circular padding. The first embedded day was therefore computed from the newest day of the window together with days 1 and 2, and the last embedded day, the most recent one, from days 59 and 60 together with the oldest day. The two ends of the lookback were joined although they are 60 trading days apart. The paper's results were produced with circular padding (tag `paper-2024`).
+
+**Fix.** The convolution is padded causally: two copies of the first day on the left and none on the right, so each embedded day depends only on itself and the two days before it (note 2, section 1). The parameters are unchanged. `token_padding: circular` restores the old embedding, and tests check that it reproduces the previous model output exactly and that with causal padding a change in the last day leaves every earlier embedded day unchanged.
+
+### 1.5 The learning-rate schedule was applied every fifth epoch
+
+`lradj = type1` sets the rate after epoch $e$ to $\eta_0\, 0.5^{\,e-1}$, and upstream TimesNet applies it after every epoch. The training loop here applied it only after epochs 5, 10, …, so the rate stayed at $\eta_0 = 10^{-2}$ for five epochs and then fell to $\eta_0 / 16$ in a single step (note 4, section 6). With early stopping at patience 3 and the best checkpoint at epoch 6, the paper run trained almost entirely at the initial rate. The paper's results used this schedule (tag `paper-2024`).
+
+**Fix.** The schedule is applied after every epoch, as upstream: epochs 1 and 2 use $\eta_0$ and the rate halves after each later epoch (note 2, section 4). `lradj_every_epoch: false` restores the old schedule, and tests check that it reproduces the previous learning-rate sequence.
+
 ## 2. Look-ahead and leakage in the evaluation
 
 ### 2.1 Batch-level period selection (fixed)
@@ -61,7 +73,8 @@ The last 10 windows of each split are labeled with returns from the next split (
 | "positional embeddings were set to be learned" | `learned` makes the calendar embedding trainable; the positional encoding stays sinusoidal (note 2, section 1). |
 | 742 test samples | The paper run scored 736 test and 352 validation windows (section 2.2). |
 | Not mentioned | The upstream per-window normalization was removed (note 2, section 5). |
-| Not mentioned | The learning rate is cut to 1/16 after epoch 5 (note 4, section 6). |
+| Not mentioned | The learning rate was cut to 1/16 after epoch 5 (section 1.5). |
+| Not mentioned | The value embedding was padded circularly (section 1.4). |
 | Not mentioned | An auxiliary up/down loss was computed in the training loop but never added to the objective; it has been removed. |
 
 ## 4. Verified as correct

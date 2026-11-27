@@ -57,7 +57,7 @@ The model has 18.8 million parameters, 99.8% of them in the Inception kernels, a
 
 ## 6. Learning-rate schedule
 
-The run uses Adam with an initial learning rate of $10^{-2}$; the upstream default, which the TimesNet reference scripts keep, is $10^{-4}$. The schedule `type1` sets $\eta_e = \eta_0\, 0.5^{\,e-1}$ but is only called every 5 epochs, so the rate stays at $\eta_0$ for five epochs and then drops to $\eta_0/16$ at once. Combined with early stopping at patience 3, most of the useful training happens at the large initial rate.
+The run uses Adam with an initial learning rate of $10^{-2}$; the upstream default, which the TimesNet reference scripts keep, is $10^{-4}$. The schedule `type1` sets $\eta_e = \eta_0\, 0.5^{\,e-1}$ but the paper run called it only every 5 epochs, so the rate stayed at $\eta_0$ for five epochs and then dropped to $\eta_0/16$ at once. Combined with early stopping at patience 3, most of the useful training happened at the large initial rate. The code now applies the schedule after every epoch, as upstream (note 5, section 1.5).
 
 ## 7. Evaluation against the wrong baseline
 
