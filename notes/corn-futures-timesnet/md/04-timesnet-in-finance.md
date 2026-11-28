@@ -74,7 +74,7 @@ The RPS is strictly proper and suits ordinal targets such as return buckets.
 
 ## 8. From forecast to strategy
 
-The signal forecasts an average return over 10 days but is computed every day, so the implied positions overlap, and the threshold $\kappa = 0.001$ on the predictive Sharpe ratio was set when $\sigma$ was mis-scaled (note 5). A credible strategy evaluation needs a defined holding rule (note 3, section 6), transaction and roll costs, a threshold chosen on validation data, and comparison with simple rules such as momentum on $\rho_t$, since $\rho_t$ is itself one of the inputs.
+The signal forecasts an average return over 10 days but is computed every day, so the implied positions overlap, and the threshold $\kappa = 0.001$ on the predictive Sharpe ratio was set when $\sigma$ was mis-scaled (note 5). A credible strategy evaluation needs a defined holding rule (note 3, section 6), transaction and roll costs, a threshold chosen on validation data, and comparison with simple rules such as momentum on $\rho_t$, since $\rho_t$ is itself one of the inputs. The backtest now holds each position for one horizon, charges transaction and roll costs, sizes positions by full Kelly with half-Kelly, the quadratic approximation and the threshold rule as secondary strategies, and reports the Sharpe ratio of each and its information ratio against buy-and-hold (note 3, sections 5 and 6).
 
 ## References
 

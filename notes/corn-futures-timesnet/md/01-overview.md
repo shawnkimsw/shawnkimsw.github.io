@@ -5,7 +5,7 @@ order: 1
 
 # Corn futures forecasting with a probabilistic TimesNet
 
-This project forecasts CME corn futures with a modified TimesNet. The model does not regress a point value. It predicts a probability distribution over return buckets, and that distribution is turned into a long, short or flat position. The work began as an internship project and was rewritten as the final project for Introduction to Deep Learning at Seoul National University (Fall 2024). These notes document the method, the mathematics behind each choice, the problems that appear when a model built for generic time series is applied to financial returns, and the corrections made after a code audit.
+This project forecasts CME corn futures with a modified TimesNet. The model does not regress a point value. It predicts a probability distribution over return buckets, and that distribution sizes a long or short position by the Kelly criterion. The work began as an internship project and was rewritten as the final project for Introduction to Deep Learning at Seoul National University (Fall 2024). These notes document the method, the mathematics behind each choice, the problems that appear when a model built for generic time series is applied to financial returns, and the corrections made after a code audit.
 
 | Note | Content |
 |---|---|
