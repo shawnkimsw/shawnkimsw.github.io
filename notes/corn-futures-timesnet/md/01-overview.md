@@ -46,7 +46,7 @@ Let $F^{(1)}_t, F^{(2)}_t, F^{(3)}_t$ be the prices of the vendor's first, secon
 
 ## 3. Target
 
-Let $r_t$ be the daily log return, from the close of the previous row to the close of $t$, of the contract held over that interval. The front's returns are recovered from the original 10-day average: with $L_t = 10 \log(1 + \rho^{\text{vendor}}_t)$, $L_t - L_{t-1} = r^{(1)}_t - r^{(1)}_{t-10}$, and ten starting values from Yahoo `ZC=F` give the whole series, which equals Yahoo's daily returns on all 3,666 rows where Yahoo has both days. The second contract's return follows from $\log F^{(2)} = \log F^{(1)} - c$ with $c$ = `contango`:
+Let $r_t$ be the daily log return, from the close of the previous row to the close of $t$, of the contract held over that interval. The front's return is Yahoo `ZC=F`'s on the 3,666 rows where Yahoo has both days; on the 14 rows Yahoo lacks, it is recovered from the original 10-day average: with $L_t = 10 \log(1 + \rho^{\text{vendor}}_t)$, $L_t - L_{t-1} = r^{(1)}_t - r^{(1)}_{t-10}$. Each return uses data up to its own row only, and the series agrees with the vendor's 10-day average on every row except 2015-04-06 to 2015-04-16. The second contract's return follows from $\log F^{(2)} = \log F^{(1)} - c$ with $c$ = `contango`:
 
 $$r^{(2)}_t = r^{(1)}_t - (c_t - c_{t-1}),$$
 

@@ -84,7 +84,7 @@ The vendor's front contract stays the expiring one until its last trading day, t
 
 **Fix.** The target is the 10-day geometric-average daily return of the contract held under a stated rule: the front until 10 business days before its first notice day, then the next contract (note 1, sections 1 and 3). Its daily returns are reconstructed exactly from the vendor's target and `contango`, and they equal Yahoo's on all 3,666 rows where Yahoo has both days. On the rows within 15 days of the vendor front's expiry, the standard deviation of daily log returns is 0.0185 for the held contract against 0.0196 for the vendor front (0.0173 on the other rows); the largest daily move while the position holds the second contract falls from 0.104 to 0.085. A `roll_day` column marks the closes at which the position switches contract, so the backtest can charge the roll.
 
-The reconstruction also showed that the vendor's target from 2015-04-06 to 2015-04-16 does not match the vendor's own prices (by up to 0.047 in the 10-day log return); the rebuilt target uses the consistent returns there.
+The reconstruction also showed that the vendor's target from 2015-04-06 to 2015-04-16 does not match the vendor's own prices (by up to 0.047 in the 10-day log return); the rebuilt target uses Yahoo's returns there. An earlier version chose between the vendor and Yahoo by a majority vote over 50 rows on either side, so up to 2015-06-12 a row's return depended on later data; the returns are now built causally and match the earlier ones to within $10^{-15}$.
 
 ### 3.4 Days to expiry from a broken input (fixed)
 
