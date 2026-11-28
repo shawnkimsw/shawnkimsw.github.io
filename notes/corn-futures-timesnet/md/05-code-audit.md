@@ -102,7 +102,7 @@ The row of 2007-01-02 is a day CBOT was closed (national day of mourning for Pre
 
 ### 3.7 Verified
 
-- **Rate:** `rate` equals `DFF` of the previous calendar day on every row.
+- **Rate:** `rate` equals `DFF` of the previous calendar day except on Columbus Day and Veterans Day, when CBOT trades but the Fed is closed: that rate is published only on the next Fed business day, so 27 rows used it a day early (8 with a different value, up to 61 bp on 2008-10-13). `rate` is now the latest rate published by the morning of $t$, on Fed business days that match the New York Fed's EFFR dates from 2006 to 2021.
 - **Vendor switch days:** all 72 switches of the vendor's front in the kept period fall on the first trading day after the contract's last trading day.
 
 ## 4. Where the paper and the code differ
