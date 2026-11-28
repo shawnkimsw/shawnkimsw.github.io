@@ -78,6 +78,17 @@ The series is split chronologically by rows, 60 / 20 / 20 by default (`train_rat
 
 The 2024 paper split 70 / 10 / 20, which gives 2,561 training, 368 validation and 742 test samples on the paper data, and 2,499, 357 and 724 on `corn_clean_v2.csv`. Its validation set, 2016-12-30 to 2018-06-15, was small and unusually calm (section 4). The default split moves a tenth of the rows from training to validation, so model selection and the temperature rest on a validation set twice as large and less unusual, while the test rows stay the same.
 
+The hyperparameter search selects on that one validation period, and three years can favor a configuration by regime alone. Before the final test, the five finalists of the search are therefore scored again on three earlier folds with an expanding training window (`scripts/walkforward.py`, dates in `configs/walkforward.yaml`):
+
+| Fold | Training | Validation | Validation samples |
+|---|---|---|---|
+| F0 | 2006-10-11 to 2011-03-04 | 2011-03-07 to 2012-08-16, the 2011–2012 drought rally | 357 |
+| F1 | 2006-10-11 to 2012-08-16 | 2012-08-17 to 2014-01-31 | 357 |
+| F2 | 2006-10-11 to 2014-01-31 | 2014-02-03 to 2015-07-17 | 357 |
+| F3 | 2006-10-11 to 2015-07-17 | 2015-07-20 to 2018-06-15, the default split | 724 |
+
+Each fold retrains the configuration with two seeds and refits the bucket edges and the feature scaling on its own training rows, so the skill against the unconditional baseline uses that fold's edges and training frequencies; F3 reuses the five seeds of the search. The choice is the highest mean skill over the four folds, each weighted equally as one regime, followed by the one-standard-error rule on the standard error across folds: among the configurations within one standard error of the best, the one with the fewest parameters. The test period, 2018-06-18 to 2021-05-14, is not used.
+
 ## 6. Repository layout
 
 ```
